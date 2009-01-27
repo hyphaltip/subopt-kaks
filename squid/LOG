@@ -1,0 +1,332 @@
+     Cambridge Mon Jul 14 03:52:51 1997
+   - new functions: 
+	AllocAlignment()	[alignio.c]
+	BlosumWeights()		[weight.c]
+	RandomString() 		[sre_string.c]
+	PrintNewHampshireTree() [cluster.c] 
+	PrintPhylo()		[cluster.c]
+   - renamed functions: 
+	SonnhammerWeights() to GSCWeights() [weight.c]
+   - deleted functions:
+	FlushAlignment() 	[msf.c]
+   - interfaces changed: 
+	MingapAlignment() 
+	FreeAlignment() 
+	ReadInterleaved()
+	ReadAlignment()
+	ReadMSF()
+   - structures changed: sequence weights moved out of SQINFO, into AINFO
+   - Strparse() simplified and made more Perl-y, with sqd_parse[] globals.
+   - PairwiseIdentity(), MakeDiffMx() simplified.  
+   - kXPearson format deleted.
+
+
+1.5l SRE, Tue Dec 17 11:10:04 1996
+   - added OWL database to getseq's options
+   - New functions: DAdd(), FAdd(), DCopy(), FCopy(), DDot(), FDot().
+	SeqfileRewind(), WeightedLinefit(), FMX2Alloc(), FMX2Free(),
+	DMX2Alloc(), DMX2Free(), FMX2Multiply()
+	IncompleteGamma(): Sat Jun 14 14:55:43 1997
+   - ReadSeq() now reentrant for alignments. aseqs, ainfo in SQINFO structure.
+   - BUGFIX: sqio.c readLoop(): seqs from files not ending in "\n" truncated
+   - PORT: SunOS: interleaved.c needs to deal w/ missing SEEK_SET
+   
+   
+1.5k SRE, Mon Dec  2 09:21:43 1996
+   - frozen for a "distribution". 
+
+1.5j summer 1996
+   - GSI indices revised. Network byte ordering. sqd_uint16, sqd_uint32
+     typedefs which should work on any UNIX, but may fail on other OSs. 
+   - Clash resolution w/ NCBI toolkit. Getopt() ARG_* changed to sqdARG_*.
+   - aafq[] updated to SwissProt 34 frequencies
+   - FileExists() added, file.c
+   - BUGFIX in getseq_main.c -- -f without -t wasn't working.
+   - BUGFIX (SERIOUS!): FSet(), DSet() were completely broken. 
+
+1.5i
+   - file.c added: new functions FileDirname(), FileConcat(); 
+      moved EnvFileOpen() into file.c
+   - Platform independence for GSI indices. (thanks to S. Brenner).
+     Magic number and byteswapping. File formats kept.
+     GSIGetRecord(), Byteswap() added. gsi_int4 typedef.
+     good speedup in fetches, prob. because of keeping format.     
+
+1.5h 
+   - BUGFIX: serious! sre_random() with seed == zero fails! default now 666.
+   - BUGFIX: small memory leak (sa) fixed in ReadSELEX().
+   - BUGFIX: useless to set SQERR_MEM and return 0 since I never check
+             return status. Replace malloc's with MallocOrDie().	
+
+1.5g (Cambridge visit + subsequent)
+   - shuffle: shuffle_main.c added; StrShuffle() in sre_string.c
+   - DChoose(), FChoose() added to sre_math.c
+   - getopt.c: Getopt() added - portable and more powerful getopt() 
+   - weight.c: FilterAlignment() added from HMM code
+   - compstruct -q (quiet) option added
+   - Numerical Recipes encumbrances obliterated:
+	* Gaussrandom() replaced from RANLIB.c
+        * Linefit() replaced with my own
+        * Gammln() replaced from Spouge's NCBI implementation
+	* sre_random() replaced with my own
+   - PORT: IRIX4 - more const declarations removed, gnuregex.h
+   - BUGFIX: reformat opts -ludr didn't work for inter-alignment conversion.
+
+
+1.5f Tue Jan  9 23:28:02 1996
+   - PORT: Maspar: const declarations in gnuregex.c removed.
+
+1.5e Sun Jan  7 10:43:24 1996
+   - genpept2gsi.pl, swiss2gsi.pl, pir2gsi.pl added to Scripts
+   - added CHOOSE() macro to squid.h
+   - BUGFIX: FASTA format doesn't always allow a space between > and name
+   - PORT:   Solaris: gnuregex.c #include <string.h> problem
+
+1.5d Tue Dec  5 11:27:20 1995
+   - getseq_main.c: native fetch mode added, bypassing ReadSeq. Full
+     record fetch w/ annotation. >250x speedup on some entries.
+   - SQINFO_FREE field removed, as well as its support in sqio.c
+     
+1.5c Mon Dec  4 12:47:20 1995
+   - getseq_main.c: couldn't fetch by accession number in PIR, because
+     of entries with multiple accessions. General problem with sqio.c
+     for multiple accessions not resolved.
+
+1.5b Sun Dec  3 10:00:55 1995 (Dealing with Berlin 5S rRNA database)
+   - Modified endEMBL() to deal with Berlin "extended" EMBL
+   - SetSeqinfoString() now ignored trailing whitespace too
+
+1.5a Sat Sep  9 10:49:50 1995
+   - New seq i/o support:
+             Extended FASTA  (kXPearson) [not a general standard]
+             GCG datalibrary (kGCGdata)  [both ASCII and mixed ASCII/2BIT]
+             Clustal         (kClustal) 
+   - interleaved.c added, generalized interleaved alignment input 
+        (Clustal and MSF support)
+   - ReadMSF(), CompareSeqs() removed.
+   - Strparse(), MakeIdentityMx(), sre_random(), sre_srandom() added	
+   - RANDOM_FRAC and friends deleted from squid.h
+   - gnuregex.c and gnuregex.h added, GNU Regex 0.12 -- slightly modified for 
+     portability (force -DREGEX_MALLOC)
+   - str*() functions renamed to Str*, so as not to conflict with ANSI
+     reserved namespace	
+   - bugfix: GCG Pileup output puts CompCheck: line in, fooling SeqfileFormat()
+       into thinking Pileup MSF alignments are unaligned GCG files.
+
+1.4.3 Fri Aug 25 11:03:32 1995
+   - portability and lint happiness, while porting to DEC OSF/1 (sable). Minor
+     changes.
+
+1.4.2 Sun Jun 25 10:28:01 1995
+   - genpept names are > 31 char. Increase length limits to 63 in squid.h,
+     using new SQINFO_NAMELEN and SQINFO_DESCLEN macros
+
+1.4.1 Thu Apr 20 16:50:23 1995
+   - translate added, adapted from orfer.
+   - serious bugfix in PairwiseIdentity(), infinite loop when both gaps
+
+1.4 Sat Feb 11 13:53:41 1995
+   - SeqfileOpen(), SeqfileFormat() now take optional environment variable (e.g. BLASTDB)
+   - added: EnvFileOpen()	
+   - removed: AlignedBases(), AlignmentSimilarity(), refcoords.c
+   - severe bugfix in selex.c, if/if brackets, introduced in 1.3.17
+   - ParsePAMFile() now deals with newer NCBI matrix format
+   - alistat modified so that low % is for most distant sequence w/ respect
+      to all others, rather than most distant pair.
+   - bugfix: Seqtype() looks now at first 300 *non-gap* characters.
+   - bugfix: ParsePAMMatrix() made more robust for scale factor parsing
+
+1.3.18 Mon Jan 30 14:45:07 1995
+   - SELEX format supports #=SA side chain % surface accessibility
+   - sre_math.c ansi'fied; FNorm(), FScale(), FSet(), DSum(), FSum(), Gammln() added.
+   - ReadSELEX() fortified against TAB characters in alignments
+
+1.3.17 Thu Jan 26 17:28:02 1995
+   - compalign_main.c added and heavily revised
+   - aligneval.c revised - CompareMatMultAlignments() and kin removed,
+     they are replaced by a more general CompareRefMultAlignments().	
+   - selex.c now quietly ignores #= machine comments it doesn't recognize
+
+1.3.16 Fri Jan 13 14:21:00 1995
+   - modified readEMBL() to parse Staden experiment file format	
+     had to include a hack (V->dash_equals_n) to read '-' as 'N' in
+     Staden format -- which means that EMBL parsing is affected as well,
+     if anyone were to use EMBL files for aligned (gap-containing) strings.
+
+1.3.15 Tue Jan 10 09:16:53 1995
+   - allow_ragged added to PairwiseIdentity()
+
+1.3.14 Thu Dec  8 11:14:06 1994
+   - cleaner PairwiseIdentity() replaces PairSimilarity() (at last!)
+   - Copyleft info attached to all source files.
+   - fflush(NULL) fails in SunOS; replace with fflush(stderr)
+   - SEEK_SET is in unistd.h in SunOS
+
+1.3.13 Mon Dec  5 14:57:33 1994
+   - GSI format redefined to allow indexing of multifile databases
+     such as GenBank. Modifications to sqio.c, squid.h.
+   - getseq revised to read environment variables like fetch
+   - free text field added to SQINFO; only used in GenBank currently
+   - Scripts/ subdirectory added, and Makefiles 'dist' and 'install' modified
+
+1.3.12 Wed Nov 23 17:32:25 1994
+   - Solaris portability: random(x) changed to random()	
+
+1.3.11 Fri Nov 11 07:40:02 1994
+   - serious memory bug fixed in FlushAlignment(); affected ReadMSF()	
+   - GSIOpen(), GSIGetOffset(), SeqfilePosition() added
+   - getseq now attempts to read a GSI index file
+   - moved IsSELEXFormat() to end of SeqfileFormat() for speed
+   - benchmarks: getseq getting ZK1236, last cosmid in allcmid:
+       10.318u  old getseq
+        5.889u  new getseq
+         .119u  new getseq, with GSI indexing of allcmid (100x speedup)
+
+1.3.10 Thu Nov 10 14:06:31 1994
+   - Die(), Warn() flush output buffers	
+   - version info gets hard-coded in iupac.c; distribution packages
+     that bundle squid files now get properly version-stamped	
+
+1.3.9 Fri Oct 14 10:16:06 1994
+   - seqstat output slightly modified
+   - sqio.c SetSeqinfoString now allows appending to description
+     (bugfix to this, Thu Oct 20 18:00:08 1994)
+
+1.3.8 Fri Sep 30 10:04:02 1994
+   - MallocOrDie(), ReallocOrDie() added. (sre_string.c)
+   - DNorm(), DScale() added.             (sre_math.c)	
+   - homogenize_gapsym added to selex.c, so RF line can come out unmodified
+
+1.3.7 Sun Sep 25 11:53:26 1994
+   - bugfix: ReadMSF() didn't deal with files containing coordinate lines.
+
+1.3.6 Mon Sep 19 16:36:15 1994  Modifications as HMM goes to 1.7 version
+   - ParsePAMFile() now returns scale factor as well as matrix
+   - bugfix: SELEX format was requiring #=CS, #=RF lines to be first in block; relaxed
+   - bugfix: Seqtype() returns kOtherSeq for DNA/RNA that doesn't have any
+      T or U. Have it return kDNA instead (though this is a bit permissive)
+
+1.3.5 Wed Aug 31 09:08:12 1994
+   - bugfix in compstruct - was undercounting false positive pair predictions
+
+1.3.4 Tue Aug 30 11:58:06 1994
+   - compstruct program written.
+   - ReadSeq() not reentrant -- can't read from multiple files at once.
+     Put sbuffer inside of V; now it's reentrant for all but alignment
+     files.	
+   - SQFILE defined now as part of the reentrancy fix. SeqfileOpen()
+     now returns SQFILE * not FILE *. This must be closed with SeqfileClose()
+     not fclose().	
+
+1.3.3 Mon Aug 29 11:58:50 1994
+   - squid format added for secondary structure annotation to sqio.c
+     and to reformat
+   - kAmbiguous, kNucleic codes removed from Seqtype()	
+   - getseq -F option added to extract in different formats. Squid extraction
+     fully functional -- can extract fragments of secondary structure annotation
+   - -l,-u options added to reformat to force upper, lower case
+
+1.3.2 Sun Aug 28 17:29:22 1994
+   - -r,-d options added to reformat
+   - raw output added to WriteSeq() and reformat
+
+1.3.1 Fri Aug 26 15:17:43 1994
+   - bugfix: RandomAlignment() needed to create sqinfo array for ainfo.
+   - bugfix: strtok() calls should include \n in sqio for many things
+
+1.3 Thu Aug 11 16:47:34 1994
+   - Goals of modifications: 
+	sqinfo structure for secondary structure, source and source coords	
+	ainfo flags for "info not available" 
+	PIR-CODATA file reading
+	more stringent format recognition
+	formats for reading now settable by main programs, thru user options
+	utility programs moved to this directory for coherent maintenance
+	improved testing (Formats/ directory)
+   - major modifications to sqio and alignio: sqinfo added (optional 
+     per sequence info) and ainfo heavily modified.
+   - listSequences options removed from sqio
+   - readPlain, readFitch, readOlsen, readPhylip removed from sqio
+   - readPIR (PIR-CODATA format) added
+   - IsSELEX() rewritten
+   - added Formats directory for testing all different formats
+   - added programs "seqstat", "reformat", "revcomp", "getseq"
+   - the following functions are affected in ways that are externally visible:
+	SeqfileFormat()        must be called before reading sequences now
+	ReadMultipleRseqs()    new prototype includes file format, seqinfo
+	ReadAlignment()        new prototype includes file format
+	SeqfileOpen()          replaces SeqDBopen()
+	ReadSeq()              replaces readSeq()
+	WriteSeq()             replaces writeSeq()
+	FreeSequence()         new
+	SetSeqinfoString()     new
+	SeqinfoCopy()          new
+	SeqFormatString()      new
+	MakeAlignedString()    new
+	MakeDealignedString()  new
+
+1.2.7 Fri Aug  5 14:45:08 1994
+   - portability to Sun Solaris 2.3	
+
+1.2.6 Fri Jul 29 15:59:13 1994
+   - bugfix: revcomp() chokes on non-IUPAC symbol and returns NULL;
+     but I often don't check the return value. Insert an N for non-IUPAC
+     instead.	
+
+1.2.5 Mon Jul 25 14:02:39 1994
+   - bugfix: isSeqChar() returns TRUE for 255, because of a known
+     IRIX 4.0 bug in isascii(). Added a workaround.
+   - added ReverseIntStack() to stack.c
+
+1.2.4 Tue Jun 14 11:21:15 1994
+   - bugfix: sqio.c, ReadMultipleRseqs(): ainfo was uninitialized
+
+1.2.3 Wed May 25 15:42:07 1994
+   - bugfix: the branch length calculations in Cluster() broke the 
+     filtering algorithm in "clust". Added diff field to the tree 
+     structure.
+
+1.2.2 Fri May 20 14:07:31 1994
+   - added VoronoiWeights() to weight.c
+
+1.2.1 Thu Apr 21 16:10:58 1994
+   - bugfix: major bugs in weight.c which only manifest themselves
+             on large data sets (like 400 globins set) found and killed
+
+1.2 Thu Mar  3 13:33:52 1994
+   - added cluster.c - difference matrix construction and simple tree construction
+   - added stack.c   - simple generic data structure support (intstack)
+   - added weight.c  - Erik's weighting rule
+
+Sat Feb 19 09:16:02 1994 1.1.1
+   - ansified all functions used by the cove package, while tracking an
+     IRIX compiler problem
+
+Tue Feb  8 13:07:41 1994 1.1
+   - global "squid_version" added to iupac.c for version control. Arbitarily
+     set to 1.1.		
+
+Fri Jul 30 11:00:22 1993
+   New aligneval alignment comparison algorithm in place and tested.
+   Old one was subtly wrong!
+
+Wed Aug 25 12:00:39 1993
+   Removed seqexec.c, idraw.c from the distribution
+   Added Die(), Warn() functions to sqerror.c		
+
+Thu Oct  7 19:26:05 1993
+   modified Seqtype to allow blank sequences. It will return kAmino.
+   possibly not the best thing to do - quick hack, anticipating some
+   blank sequences when I hack the ribosomal alignments into small
+   pieces.
+	
+Tue Oct 12 17:24:47 1993
+   bugfix: IsSELEXFormat() was opening a file, but not closing it
+           on a failed return. Multiple opens of a non-SELEX formatted file
+           filled the open file table and caused a fatal error.
+           sqio.c is hacked beyond belief, slow, and ugly.
+
+Wed Oct 20 09:09:47 1993
+   WritePairwiseAlignment() added.
+
+	

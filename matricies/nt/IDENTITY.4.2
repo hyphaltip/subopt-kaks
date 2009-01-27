@@ -1,0 +1,36 @@
+# NOTE: a score of -10000 (or less) is interpreted by WU-BLAST 2.0
+# to mean that the substitution is absolutely disallowed.
+# Other versions of BLAST may, however, treat low scores of -10000 or less
+# differently (e.g., as literal substitution score values).
+#
+# Only ACGT are specified below for Subject COLUMN headings and Query ROW
+# labels, because omitted letters have implicit (default) substitution scores
+# of -10000 against all letters in the alphabet and are not allowed to appear
+# in reported alignments (see above for the treatment of scores <= -10000).  It
+#is also relevant to the statistics that the assumed background frequencies
+#P(A), P(C), P(G), and P(T) all sum to 1.  In other words, letters other than A,
+#C, G and T are assumed to have background frequencies of 0, even though they
+#may appear at some frequency in the actual query and database sequences.
+#
+# Due to the specific definition of identity scoring and the background
+# frequencies presented here, the same file can serve both as the .4.4 file
+# and the .4.2 file.  For more complicated scoring situations, the .4.2 file
+# may have 15 rows and 4 columns; and the .4.4 file may have 15 rows
+# and 15 columns.
+#
+# The 2-bit .2 alphabet is simply ACGT
+#
+# The complete 4-bit .4 alphabet is
+# ACGT RYMKWSBDHVN -
+#      acagaccaaaa
+#      gtcttgggccc
+#            tttgg
+#                t
+#
+# NOTE:  substitution scores for the gap character, -, should NOT be specified
+#
+   A      C      G      T
+A  1     -10000 -10000 -10000
+C -10000  1     -10000 -10000
+G -10000 -10000  1     -10000
+T -10000 -10000 -10000  1

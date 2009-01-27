@@ -1,0 +1,113 @@
+.TH "cds_zuker_align" 1 "@RELEASEDATE@" "@PACKAGE@ @RELEASE@" "@PACKAGE@ Manual"
+
+.SH NAME
+.TP 
+cds_zuker_align - generate suboptimal protein-based pairwise alignments of cds sequences 
+
+.SH SYNOPSIS
+.B cds_zuker_optimal
+.I [options]
+.I sequence-file
+
+
+.SH DESCRIPTION
+
+.B cds_zuker_align
+for a given pair of CoDing Sequences (introns spliced out) this
+program will translate the CDSs into proteins, generate a set of
+suboptimal alignments using an algorithm described by Michael Zuker.
+The alignments will be back translated to the original coding
+sequences.
+
+The output can be returned as the optimal pairwise alignment in any
+format that Sean Eddy's
+.I SQUID
+library will support.
+
+.PP
+Multiple sequence pairs can be provided within the same file.  They
+will be processed as the first pair, second pair, etc.
+  
+.PP 
+.I SQUID 
+is a C library written by Sean Eddy.  Most of the standard sequence
+file formats and alignment formats are supported.  I typically suggest using
+FASTA, Clustalw, and PHYLIP formats with these programs as they are
+some of the simplest.
+
+
+.SH OPTIONS
+
+.TP
+.B -h
+Print brief help; includes version number and summary of
+all options, including expert options.
+
+.TP
+.B -v
+Turn on verbose messages
+
+
+.SH EXPERT OPTIONS
+
+.TP
+.B --optimal 
+Only compute the optimal alignment and stop.
+
+.TP
+.B --upper_bound value
+Upper bound for scores to use when generating suboptimal alignments.
+You will have to get a feel for the scoring range of the data before
+you can determine a sensible value here.
+
+.TP
+.B --lower_bound value
+Lower bound for scores to use when generating suboptimal alignments.
+You will have to get a feel for the scoring range of the data before
+you can determine a sensible value here.
+
+.TP
+.B --maxtoshow value
+Set the maximum number of alignments to show.  Default is 5.
+
+.TP
+.B --minlen value
+Set the minimum length alignment you want to see. Default is 50 aa.
+
+.TP
+.B --matrix value
+Specify a path to the substitution matrix to use.  By default this is
+.I $SUBOPTDIR/matricies/aa/BLOSUM50
+where
+.I $SUBOPTDIR
+is an environment variable.  If it is not provided the program will
+look in ../matricies/aa/BLOSUM50.  If you change the matrix you should
+also change the gapopen and extension penalties to be correct.
+
+.TP
+.B --gapopen value
+Specify the gap opening cost. This is -10 by default.
+
+.TP
+.B --gapext value
+Specify the gap extension cost.  This is -2 by default.
+
+.TP
+.B --gapchar value
+Specify an alternate gap character from the default '-'
+
+
+
+.SH AUTHOR
+
+@PACKAGE@ and its documentation are @COPYRIGHT@
+@LICENSE@
+See COPYING in the source code distribution for more details, or contact me.
+
+.nf
+Jason Stajich
+Duke University
+Email: jason.stajich@duke.edu
+.fi
+
+

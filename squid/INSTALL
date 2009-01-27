@@ -1,0 +1,81 @@
+Brief installation instructions for squid
+SRE, Tue Jul 25 08:52:03 2000
+$CVS Id$
+________________________________________________________________
+
+
+Quick start
+---------------
+For a source distribution (example: squid.tar.gz), on a UNIX system:
+
+   gunzip squid.tar.gz   Uncompresses the archive.
+   tar xf squid.tar      Unpacks the archive. 
+                             (makes a new directory, squid)
+   cd squid              Moves into the distribution toplevel directory.
+   ./configure               Configures the software for your system.
+   make                      Builds the binaries. 
+   make check                (optional) Runs the testsuite.	
+   make install              (optional) Installs the software. 
+                                (You may need to be root to install.)
+   make clean                (optional) Cleans up.
+   make deinstall	 Deletes SQUID from your system... assuming you 
+                         haven't changed the Makefile since you installed. 
+                         (may need to be root.)
+ 
+Note that the software doesn't have to be "installed" to run. After
+the "make", it's sitting in the squid directory and you can test it
+out there, or copy any of the executables anywhere you want by hand. 
+
+Any failure to install on a UNIX system is a bug. Please report it.
+
+Man pages are provided for some programs; see Man/ subdirectory.
+
+
+----------------------------------------
+More fancy configuration instructions:
+----------------------------------------
+The only command you should want to putz around with is the
+./configure; for instance, you may want to change where SQUID is going
+to be installed. The default is to install into /usr/local/bin and
+other /usr/local subdirectories as follows: 
+         executables in   /usr/local/bin
+         man pages in     /usr/local/man/man1
+         header files in  /usr/local/include
+         libsquid.a in    /usr/local/lib
+         scripts in       /usr/local/bin
+
+To install in bin, man/man1, include, and lib subdirectories of some
+other directory, reset the prefix in the configuration like this:
+	% ./configure prefix=/usr/mylocal
+
+For heterogenous computing environments, also set the exec_prefix,
+which gives you some flexibility for installing architecture dependent
+files (e.g. the programs). For example, the St. Louis installation
+sets prefix=/usr/seshare/ exec_prefix=/usr/seshare/`uname`, and for
+Linux (for example), this results in:
+         executables in   /usr/seshare/Linux/bin
+         man pages in     /usr/seshare/man
+         header files in  /usr/seshare/include
+         libsquid.a in    /usr/seshare/Linux/lib
+         scripts in       /usr/seshare/Linux/bin
+
+
+The configure script has a few other options that may be useful;
+./configure --help lists them. An important one is --enable-lfs, which
+turns on optional support for LFS, the Large File Summit, which
+enables squid to deal with >2 GB files if your system is capable of
+it. This is highly recommended, because sequence files can easily
+exceed standard 2 GB filesystem limitations these days
+
+FYI, the configuration incantation here in StL is:
+  % env CFLAGS="-O3" ./configure --enable-lfs prefix=/usr/seshare/ exec_prefix=/usr/seshare/`uname`	
+
+
+
+
+
+
+
+
+
+   

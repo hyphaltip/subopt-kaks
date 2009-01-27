@@ -1,0 +1,26 @@
+# bug log started: SRE, Sun Apr 28 15:27:41 2002
+#
+ID              1
+STATUS          closed
+DESCRIPTION     sfetch can't follow paths out of cwd if using SSI
+NOTED_DATE      6 Mar 02
+NOTED_XREF      -
+REPORTED_BY     Zhirong Bao (bao@genetics)
+REPRODUCE_WITH  Testsuite/bug-1-sfetch-paths
+REPRODUCE_ON    any
+CLOSED_DATE     6 Mar 02
+CLOSED_XREF     -
+CLOSED_ACTION   -
+//
+ID              2
+STATUS          closed
+DESCRIPTION     Fails to compile on Alpha. strtoull unresolved.
+NOTED_DATE      SRE, Sun Apr 28 15:29:55 2002
+NOTED_XREF      STL6 p.41
+REPORTED_BY     Sam Griffiths-Jones (sgj@sanger.ac.uk)
+REPRODUCE_WITH  ./configure; make
+REPRODUCE_ON    waterbug (Alpha, Digital Unix) 
+CLOSED_DATE     28 Apr 02
+CLOSED_XREF     STL6 p.41
+CLOSED_ACTION   -
+//

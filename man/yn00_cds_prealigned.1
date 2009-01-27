@@ -1,0 +1,66 @@
+.TH "yn00_cds_prealigned" 1 "@RELEASEDATE@" "@PACKAGE@ @RELEASE@" "@PACKAGE@ Manual"
+
+.SH NAME
+.TP 
+yn00_cds_optimal - do a protein-based pairwise alignment of cds sequences and calculate dD,dS using the Yang-Nielsen 2000 method
+
+.SH SYNOPSIS
+.B yn00_cds_optimal
+.I [options]
+.I sequence-file
+
+
+.SH DESCRIPTION
+
+.B yn00_cds_prealigned
+for a given pair of aligned CoDing Sequences (introns spliced out)
+this program will calculate the pairwise dN and dS values using the
+Yang and Nielsen (2000) method.  The output will be returned as a
+table of values which will include the sequence names, dN, dS, Omega,
+t, S, N.
+
+.PP
+Multiple sequence alignment pairs can be provided within the same file.  They
+will be processed as the first pair, second pair, etc.
+
+
+.SH OPTIONS
+
+.TP
+.B -h
+Print brief help; includes version number and summary of
+all options, including expert options.
+
+.TP
+.B -v
+Turn on verbose messages
+
+.TP
+.B --output filename
+Provide a filename for writing the output to rather than the default
+of stdout.
+
+.TP
+.B --informat value
+Specify the input sequence format.  The program will try to guess this
+based on the file extension and the first line of the file.
+
+.TP
+.B --noheader
+Do not print a header describing the values of all the columns.  This
+is helpful for large batch runs.
+
+
+.SH AUTHOR
+
+@PACKAGE@ and its documentation are @COPYRIGHT@
+@LICENSE@
+See COPYING in the source code distribution for more details, or contact me.
+
+.nf
+Jason Stajich
+Duke University
+Email: jason.stajich@duke.edu
+.fi
+
+

@@ -1,0 +1,121 @@
+.TH "yn00_cds_optimal" 1 "@RELEASEDATE@" "@PACKAGE@ @RELEASE@" "@PACKAGE@ Manual"
+
+.SH NAME
+.TP 
+yn00_cds_optimal - do a protein-based pairwise alignment of cds sequences and calculate dD,dS using the Yang-Nielsen 2000 method
+
+.SH SYNOPSIS
+.B yn00_cds_optimal
+.I [options]
+.I sequence-file1
+
+
+.SH DESCRIPTION
+
+.B yn00_cds_optimal
+for a given pair of CoDing Sequences (introns spliced out) this
+program will translate the CDSs into proteins, align them using a
+global (Needleman-Wunsch) or local (Smith-Waterman) alignment
+algorithm, back translate the alignment into the original CDS sequence
+and calculate the pairwise dN and dS values.  The output can be
+returned either as the optimal pairwise alignment in any format that
+Sean Eddy's
+.I SQUID
+library will support or as table of values which will include the
+sequence names, dN, dS, Omega, t, S, N.
+
+.PP
+Multiple sequence pairs can be provided within the same file.  They
+will be processed as the first pair, second pair, etc.
+  
+.PP 
+.I SQUID 
+is a C library written by Sean Eddy.  Most of the standard sequence
+file formats and alignment formats are supported.  I typically suggest using
+FASTA, Clustalw, and PHYLIP formats with these programs as they are
+some of the simplest.
+
+
+.SH OPTIONS
+
+.TP
+.B -h
+Print brief help; includes version number and summary of
+all options, including expert options.
+
+.TP
+.B -v
+Turn on verbose messages
+
+.TP
+.B --showtable 
+Calculate the synonymous (dS) and non-synonymous (dN) rates and print
+them out as a table.
+
+.TP
+.B --output filename
+Provide a filename for writing the output to rather than the default
+of stdout.
+
+.TP
+.B --informat value
+Specify the input sequence format.  The program will try to guess this
+based on the file extension and the first line of the file.
+
+.TP
+.B --outformat value
+Specify the alignment output sequence format.  The program will try to
+guess this based on the file extension.  This will be PHYLIP by
+default.
+
+
+.SH EXPERT OPTIONS
+
+.TP
+.B --global
+Using a global alignment algorithm rather than the default local
+alignment.  This will attempt to find the optimal alignment path for
+the entire length of both sequences rather than just the best local
+alignment.
+
+.TP
+.B --matrix value
+Specify a path to the substitution matrix to use.  By default this is
+.I $SUBOPTDIR/matricies/aa/BLOSUM50
+where
+.I $SUBOPTDIR
+is an environment variable.  If it is not provided the program will
+look in ../matricies/aa/BLOSUM50.  If you change the matrix you should
+also change the gapopen and extension penalties to be correct.
+
+.TP
+.B --gapopen value
+Specify the gap opening cost. This is -10 by default.
+
+.TP
+.B --gapext value
+Specify the gap extension cost.  This is -2 by default.
+
+.TP
+.B --gapchar value
+Specify an alternate gap character from the default '-'
+
+.TP
+.B --noheader
+Do not print a header describing the values of all the columns.  This
+is helpful for large batch runs.
+
+
+.SH AUTHOR
+
+@PACKAGE@ and its documentation are @COPYRIGHT@
+@LICENSE@
+See COPYING in the source code distribution for more details, or contact me.
+
+.nf
+Jason Stajich
+Duke University
+Email: jason.stajich@duke.edu
+.fi
+
+

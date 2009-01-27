@@ -1,0 +1,129 @@
+.TH "zuker_align" 1 "@RELEASEDATE@" "@PACKAGE@ @RELEASE@" "@PACKAGE@ Manual"
+
+.SH NAME
+.TP 
+zuker_align - Generate the optimal and a set of suboptimal protein
+alignments.
+
+.SH SYNOPSIS
+.B zuker_align
+.I [options]
+.I sequence-file1
+
+
+.SH DESCRIPTION
+
+.B zuker_align
+For a given pair of protein sequences or CoDing Sequences (introns
+spliced out) this program will generate a set of sub-optimal
+alignments based on the algorithm by Michael Zuker.  If the input
+sequence is CDS the program will first translate them to protein using
+the standard codon table. 
+
+You can control the number and type of sub-optimal alignments to
+generate by setting the --upper_bound, --lower_bound, --minlen, and
+--max_to_show options.
+
+
+.PP
+Multiple sequence pairs can be provided within the same file.  They
+will be processed as the first pair, second pair, etc.
+
+
+.SH OPTIONS
+
+.TP
+.B -h
+Print brief help; includes version number and summary of
+all options, including expert options.
+
+.TP
+.B -v
+Turn on verbose messages
+
+
+.TP
+.B --output filename
+Provide a filename for writing the output to rather than the default
+of stdout.
+
+.TP
+.B --informat value
+Specify the input sequence format.  The program will try to guess this
+based on the file extension and the first line of the file.
+
+.TP
+.B --outformat value
+Specify the alignment output sequence format.  The program will try to
+guess this based on the file extension.  This will be PHYLIP by
+default.
+
+.TP
+.B --global
+Using a global alignment algorithm rather than the default local
+alignment.  This will attempt to find the optimal alignment path for
+the entire length of both sequences rather than just the best local
+alignment.
+ 
+.SH EXPERT OPTIONS
+
+.TP
+.B --optimal 
+Only compute the optimal alignment and stop.
+
+.TP
+.B --upper_bound value
+Upper bound for scores to use when generating suboptimal alignments.
+You will have to get a feel for the scoring range of the data before
+you can determine a sensible value here.
+
+.TP
+.B --lower_bound value
+Lower bound for scores to use when generating suboptimal alignments.
+You will have to get a feel for the scoring range of the data before
+you can determine a sensible value here.
+
+.TP
+.B --maxtoshow value
+Set the maximum number of alignments to show.  Default is 5.
+
+.TP
+.B --minlen value
+Set the minimum length alignment you want to see. Default is 50 aa.
+
+.TP
+.B --matrix value
+Specify a path to the substitution matrix to use.  By default this is
+.I $SUBOPTDIR/matricies/aa/BLOSUM50
+where
+.I $SUBOPTDIR
+is an environment variable.  If it is not provided the program will
+look in ../matricies/aa/BLOSUM50.  If you change the matrix you should
+also change the gapopen and extension penalties to be correct.
+
+.TP
+.B --gapopen value
+Specify the gap opening cost. This is -10 by default.
+
+.TP
+.B --gapext value
+Specify the gap extension cost.  This is -2 by default.
+
+.TP
+.B --gapchar value
+Specify an alternate gap character from the default '-'
+
+
+.SH AUTHOR
+
+@PACKAGE@ and its documentation are @COPYRIGHT@
+@LICENSE@
+See COPYING in the source code distribution for more details, or contact me.
+
+.nf
+Jason Stajich
+Duke University
+Email: jason.stajich@duke.edu
+.fi
+
+

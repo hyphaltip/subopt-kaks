@@ -1,0 +1,105 @@
+.TH "sindex" 1 "@RELEASEDATE@" "@PACKAGE@ @RELEASE@" "@PACKAGE@ Manual"
+
+.SH NAME
+.TP 
+sindex - index a sequence database for sfetch
+
+.SH SYNOPSIS
+.B sindex
+.I [options]
+.I seqfile1 [seqfile2...]
+
+.SH DESCRIPTION
+
+.B sindex
+indexes one or more
+.I seqfiles
+for future sequence retrievals by 
+.B sfetch.
+An SSI ("squid sequence index") file is created in the same directory
+with the sequence files. By default, this file is called 
+.I <seqfile>.ssi.
+
+.PP
+If there is more than one sequence file on the command line,
+the SSI filename will be constructed from the last sequence file
+name. This may not be what you want; see the 
+.I -o 
+option to specify your own name for the SSI file.
+
+.PP
+.I sindex
+is capable of indexing large files (>2 GB) if optional LFS support
+has been enabled at compile-time. See INSTALL instructions that came
+with @PACKAGE@.
+
+.SH OPTIONS
+
+.TP
+.B -h
+Print brief help; includes version number and summary of
+all options, including expert options.
+
+.TP
+.BI -o " <ssi outfile>" 
+Direct the SSI index to a file named
+.I <outfile>.
+By default, the SSI file would go to 
+.I <seqfile>.ssi.
+
+.SH EXPERT OPTIONS
+
+.TP
+.B --64
+Force the SSI file into 64-bit (large seqfile) mode, even if the
+seqfile is small. You don't want to do this unless you're debugging.
+
+.TP
+.B --external
+Force 
+.I sindex
+to do its record sorting by external (on-disk) sorting. This is
+only useful for debugging, too.
+
+.TP
+.BI --informat " <s>"
+Specify that the sequence file is definitely in format 
+.I <s>;
+blocks sequence file format autodetection. This is useful in automated
+pipelines, because it improves robustness (autodetection can
+occasionally go wrong on a perversely misformed file). Common examples
+include genbank, embl, gcg, pir, stockholm, clustal, msf, or phylip;
+see the printed documentation for a complete list of accepted format
+names.
+
+.TP
+.B --pfamseq
+A hack for Pfam; indexes a FASTA file that is known to have identifier
+lines in format ">[name] [accession] [optional description]". Normally
+only the sequence name would be indexed as a primary key in a FASTA
+SSI file, but this allows indexing both the name (as a primary key)
+and accession (as a secondary key).
+
+.SH SEE ALSO
+
+.PP
+@SEEALSO@
+
+.SH AUTHOR
+
+@PACKAGE@ and its documentation are @COPYRIGHT@
+@LICENSE@
+See COPYING in the source code distribution for more details, or contact me.
+
+.nf
+Sean Eddy
+Dept. of Genetics
+Washington Univ. School of Medicine
+4566 Scott Ave.
+St Louis, MO 63110 USA
+Phone: 1-314-362-7666
+FAX  : 1-314-362-7855
+Email: eddy@genetics.wustl.edu
+.fi
+
+

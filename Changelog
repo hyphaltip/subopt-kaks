@@ -1,0 +1,37 @@
+Changes to suboptaln
+
+0.06 
+ yn00_cds_prealigned.c 
+  a new program which will process multiple alignments and calculate all
+  pairwise combination as the PAML yn00 does, will also accept multiple
+  sequence files to process on the cmd line.
+
+ squid/phylip.c
+  modified to support really parsing multiple MSA alignments in a single file
+
+ yn00_cds_optimal.c
+  Will calculate alignments and dN, dS for all pairwise combinations not 
+  just the first two sequences in the file.
+
+  Also remove last codon of a sequence if it is a stop codon.
+
+ 
+0.05 
+ zuker.c  
+  boundary condition error fixed in fill_matrix - should be offsetting
+  location of best_loc by doing i-1
+
+ yn00_cds_optimal.c 
+  fixed bug which was caused by extra increment in cds_seq 
+
+0.04 
+ yn00_simple.c  
+  Allow skipping of codons which contain a non-DNA char 
+  (ambiguity bases or an N) so that can still calculate a distance value
+  while skipping the codons which contain the character
+   
+  err2 now prints to stderr so that redirection capture is not cluttered
+   with error/debugging messages.
+
+0.03
+ * Support --noheader options in yn00_cds_optimal and yn00_zuker_align
