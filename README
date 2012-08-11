@@ -23,6 +23,9 @@ To build this:
 # do a test alignment
 % ./bin/yn00_cds_optimal --showtable tst/F35G8.1_CBG16160.cds.fas > table
 
+#Run on a pre-aligned file alignment format 
+% yn00_cds_prealigned tst/F35G8.1_CBG16160.cds.aln
+
 Should build on OSX and Linux fine.  
 
 SQUID is Sean Eddy's library.  Much of the code for alignment is based
