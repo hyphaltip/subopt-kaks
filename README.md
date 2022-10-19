@@ -1,4 +1,4 @@
-VERSION (unreleased, 2004-02-18)
+**VERSION** (unreleased, 2004-02-18)
 Suboptimal alignments and Ka/Ks calculations
 
 This src is freely available, but should be considered a personal
@@ -8,7 +8,7 @@ questions or intend to use this for large scale analyses so I can be
 sure it is performing properly for you. 
 
 To build this:
-
+```
 % cd squid
 % ./configure 
 % make
@@ -25,7 +25,7 @@ To build this:
 
 #Run on a pre-aligned file alignment format 
 % yn00_cds_prealigned tst/F35G8.1_CBG16160.cds.aln
-
+```
 Should build on OSX and Linux fine.  
 
 SQUID is Sean Eddy's library.  Much of the code for alignment is based
@@ -58,7 +58,7 @@ Helpful hints:
   memory management between OSX and linux and have not been testing
   this on solaris at all at this point.
 
-
+```
 Usage: yn00_cds_optimal [-options] <sequence file>
 
    Generate the optimal alignments for a pair of CDS sequences using the protein sequence as a template.
@@ -80,9 +80,8 @@ Usage: yn00_cds_optimal [-options] <sequence file>
    --gapchar     : Provide a different gap char from '-'
    --showtable   : Show the summary Ka/Ks table instead of the alignment.
    --noheader    : Don't display a header for the table
- 
+ ```
 
 Jason Stajich
 Duke University
-jason.stajich AT duke.edu or jason AT bioperl.org
 
