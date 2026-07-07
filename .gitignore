@@ -2,3 +2,36 @@
 *.o
 Makefile
 bin
+
+# Build artifacts
+*.a
+*.log
+
+# Compiled tools (built from same-named .c sources)
+/src/zuker_align
+/src/cds_zuker_align
+/src/yn00_zuker_align
+/src/yn00_cds_optimal
+/src/yn00_cds_prealigned
+
+# squid: generated headers/config and built utilities
+/squid/squid.h
+/squid/squidconf.h
+/squid/config.status
+/squid/afetch
+/squid/alistat
+/squid/compalign
+/squid/compstruct
+/squid/revcomp
+/squid/seqsplit
+/squid/seqstat
+/squid/sfetch
+/squid/shuffle
+/squid/sindex
+/squid/sreformat
+/squid/translate
+/squid/weight
+
+# Runtime output
+summary.dat
+err.log
