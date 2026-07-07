@@ -193,15 +193,86 @@ void print_matrix ( int ** matrix,
   printf("\n");
 }
 
-void 
-cleanup_matrix (void ** m, int x) 
-{  
+void
+cleanup_matrix (void ** m, int x)
+{
   int i;
-  if( ! m ) return;  
+  if( ! m ) return;
   for(i = 0; i < x; i++ ) {
     if( m[i] ) {
       free(m[i]);
     }
-    
+
   }
+}
+
+#include <unistd.h> /* access */
+
+/* malloc a copy of a NUL-terminated string. */
+static char *
+dupstr (const char *s)
+{
+  size_t n = strlen(s) + 1;
+  char *p = (char *) malloc(n);
+  if( p ) memcpy(p, s, n);
+  return p;
+}
+
+/* Join a directory and a filename into a freshly malloc'd "dir/name". */
+static char *
+join_path (const char *dir, const char *name)
+{
+  size_t n = strlen(dir) + 1 + strlen(name) + 1;
+  char *p = (char *) malloc(n);
+  if( p ) snprintf(p, n, "%s/%s", dir, name);
+  return p;
+}
+
+char *
+resolve_matrix_file (const char *spec, const char *matdir)
+{
+  const char *name = (spec && *spec) ? spec : DEFAULT_MATRIX_NAME;
+  const char *dirs[16];
+  char root1[PATH_MAX], root2[PATH_MAX];
+  char *env, *path;
+  int nd = 0, i;
+
+  /* An explicit path is taken verbatim so the caller can report a clear
+   * "cannot open <path>" error if it is missing. */
+  if( strchr(name, '/') != NULL )
+    return dupstr(name);
+
+  /* A bare name that already resolves in the current directory. */
+  if( access(name, R_OK) == 0 )
+    return dupstr(name);
+
+  /* Otherwise search the matrix directories in priority order. */
+  if( matdir && *matdir )
+    dirs[nd++] = matdir;
+  if( (env = getenv("SUBOPT_MATRIX_DIR")) != NULL && *env )
+    dirs[nd++] = env;
+  if( (env = getenv("SUBOPTDIR")) != NULL && *env ) {
+    snprintf(root1, sizeof root1, "%s/matricies/aa", env);
+    dirs[nd++] = root1;
+  }
+  if( (env = getenv("SUBOPT_DIR")) != NULL && *env ) {
+    snprintf(root2, sizeof root2, "%s/matricies/aa", env);
+    dirs[nd++] = root2;
+  }
+  dirs[nd++] = "matricies/aa";
+  dirs[nd++] = "../matricies/aa";
+  dirs[nd++] = "../../matricies/aa";
+#ifdef SUBOPT_DATADIR
+  dirs[nd++] = SUBOPT_DATADIR "/matricies/aa";
+#endif
+
+  for(i = 0; i < nd; i++) {
+    path = join_path(dirs[i], name);
+    if( path == NULL )
+      return NULL;
+    if( access(path, R_OK) == 0 )
+      return path;
+    free(path);
+  }
+  return NULL;
 }

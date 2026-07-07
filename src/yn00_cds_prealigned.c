@@ -10,6 +10,9 @@
 #include "align.h"
 #include "mrtrans.h"
 
+int do_kaks_yn00(MSA * cds_alignment, pairwise_distances * MLdist,
+		 pairwise_distances * NGdist);
+
 struct opt_s OPTIONS[] = {
   { "-h",              TRUE, sqdARG_NONE },  
   { "--informat",      FALSE, sqdARG_STRING },
@@ -170,9 +173,11 @@ main (int argc, char ** argv )
       free(pwMLdist.SEdN);
       free(pwMLdist.t);
       free(pwMLdist.kappa);
-      
+
       seqct = 0;
+      MSAFree(msa);
     }
+    MSAFileClose(msafile);
   }
 
   if( ofd && ofd != stdout )

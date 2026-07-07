@@ -15,8 +15,9 @@ struct opt_s OPTIONS[] = {
   { "-h",              TRUE, sqdARG_NONE },  
   { "-v",              TRUE, sqdARG_NONE },    
   { "--matrix",        FALSE, sqdARG_STRING },
-  { "--global",        FALSE, sqdARG_NONE},  
-  { "--optimal",       FALSE, sqdARG_NONE},  
+  { "--matrix-dir",    FALSE, sqdARG_STRING },
+  { "--global",        FALSE, sqdARG_NONE},
+  { "--optimal",       FALSE, sqdARG_NONE},
   { "--informat",      FALSE, sqdARG_STRING },
   { "--showalignment", FALSE, sqdARG_NONE},
   { "--outformat",     FALSE, sqdARG_STRING },
@@ -72,7 +73,7 @@ main (int argc, char ** argv )
   int    min_aln_len      = 0;
   int    do_oneline       = 0, aln_count;
   int    separate_files   = 0, provide_ofname = 0;
-  char   * output_filename = 0, *submat_file = 0, *t;
+  char   * output_filename = 0, *submat_file = 0, *matrix_dir = 0, *t;
   int    showheader=1;
   
   FILE  *ofd, *fd;
@@ -116,7 +117,8 @@ main (int argc, char ** argv )
   while (Getopt(argc, argv, OPTIONS, NOPTIONS, usage, 
 		&optind, &optname, &optarg))
     {
-      if      (strcmp(optname, "--matrix") == 0)  submat_file = optarg; 
+      if      (strcmp(optname, "--matrix") == 0)  submat_file = optarg;
+      else if (strcmp(optname, "--matrix-dir") == 0) matrix_dir = optarg;
       else if (strcmp(optname, "--upper_bound")  == 0) 
 	Upper_bound  = atoi(optarg); 
       else if (strcmp(optname, "--max_to_show")  == 0)  
@@ -163,16 +165,16 @@ main (int argc, char ** argv )
   if (argc - optind != 1) Die("%s\n", usage);
   seqfile = argv[argc-1];  
   
-  if( ! submat_file ) { 
-    if( (t = getenv("SUBOPTDIR")) != 0 || 
-	(t = getenv("SUBOPT_DIR")) != 0 ) {
-      rc = strlen(t)+strlen((void *)Default_submat) + 2;
-      submat_file = calloc(rc, sizeof(char));
-      sprintf(submat_file, "%s/%s",t,Default_submat);
-    } else { 
-      submat_file = calloc(strlen((void *)Default_submat) + 24, sizeof(char));
-      sprintf(submat_file, "../%s",Default_submat);
+  {
+    char *resolved = resolve_matrix_file(submat_file, matrix_dir);
+    if( ! resolved ) {
+      fprintf(stderr,
+	      "Cannot locate substitution matrix '%s' in any matrix directory.\n"
+	      "Use --matrix <file>, --matrix-dir <dir>, or set $SUBOPT_MATRIX_DIR.\n",
+	      submat_file ? submat_file : DEFAULT_MATRIX_NAME);
+      exit(EXIT_FAILURE);
     }
+    submat_file = resolved; /* now heap-owned; freed near end of main */
   }
 
   /* open matrix */

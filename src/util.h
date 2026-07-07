@@ -110,6 +110,26 @@ void       cleanup_matrix(void ** m,int x);
 sequence * reverse_seq( const sequence *);
 void       cleanup_alignment(alignment *);
 
+/* Default substitution matrix name looked up within a matrix directory. */
+#ifndef DEFAULT_MATRIX_NAME
+#define DEFAULT_MATRIX_NAME "BLOSUM62"
+#endif
+
+/* Resolve a substitution-matrix specification to a readable file path.
+ *
+ * `spec` may be NULL/empty (use DEFAULT_MATRIX_NAME), an explicit path
+ * (contains '/', taken verbatim), or a bare matrix name (e.g. "BLOSUM62")
+ * searched for within a set of matrix directories, in priority order:
+ *   1. `matdir` argument (e.g. from --matrix-dir)
+ *   2. $SUBOPT_MATRIX_DIR
+ *   3. $SUBOPTDIR/matricies/aa , $SUBOPT_DIR/matricies/aa
+ *   4. ./matricies/aa , ../matricies/aa , ../../matricies/aa
+ *   5. SUBOPT_DATADIR/matricies/aa  (if compiled with -DSUBOPT_DATADIR=...)
+ *
+ * Returns a malloc'd path the caller must free, or NULL if a bare name could
+ * not be located in any directory. */
+char    *  resolve_matrix_file(const char *spec, const char *matdir);
+
 /* direction */
 extern const int DIAG, DOWN, ACROSS,EXTENDED_DOWN,EXTENDED_ACROSS,END_POSITION;
 

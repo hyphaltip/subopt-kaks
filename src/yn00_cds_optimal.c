@@ -16,7 +16,8 @@ struct opt_s OPTIONS[] = {
   { "-h",              TRUE, sqdARG_NONE },  
   { "-v",              TRUE, sqdARG_NONE },    
   { "--matrix",        FALSE, sqdARG_STRING },
-  { "--global",        FALSE, sqdARG_NONE},  
+  { "--matrix-dir",    FALSE, sqdARG_STRING },
+  { "--global",        FALSE, sqdARG_NONE},
   { "--informat",      FALSE, sqdARG_STRING },
   { "--outformat",     FALSE, sqdARG_STRING },
   { "--gapopen",       FALSE, sqdARG_STRING },
@@ -30,7 +31,7 @@ struct opt_s OPTIONS[] = {
 #define NOPTIONS (sizeof(OPTIONS) / sizeof(struct opt_s))
 
 static char usage[] = "\nUsage: yn00_cds_optimal [-options] <sequence file>\n\n   Generate the optimal alignments for a pair of CDS sequences using the protein sequence as a template.\n   Available options:\n   -h      : help; print version and usage info\n   -v      : verbose output -- show alignment path states.\n ";
-static char experts[] = "\n   --global      : generate global rather than the default local alignments\n   --gapopen num : Gap open penalty.  Default is -10.\n   --gapext      : Gap extension penalty.  Default is -2.\n   --informat    : Format of the input sequence file database.\n   --outformat   : Format of the output sequence alignments.\n   --output      : specify an output file instead or writing to STDOUT\n   --matrix      : Path to substitution matrix.\n                   Default is ../matricies/aa/BLOSUM50.\n   --gapchar     : Provide a different gap char from '-'\n   --showtable   : Show the summary Ka/Ks table instead of the alignment.\n   --noheader     : Do not show the header for the table summary";
+static char experts[] = "\n   --global      : generate global rather than the default local alignments\n   --gapopen num : Gap open penalty.  Default is -10.\n   --gapext      : Gap extension penalty.  Default is -2.\n   --informat    : Format of the input sequence file database.\n   --outformat   : Format of the output sequence alignments.\n   --output      : specify an output file instead or writing to STDOUT\n   --matrix      : Substitution matrix: a file path, or a bare name (e.g.\n                   BLOSUM62) resolved within a matrix directory. Default BLOSUM62.\n   --matrix-dir  : Directory to search for named matrices (overrides\n                   $SUBOPT_MATRIX_DIR / $SUBOPTDIR).\n   --gapchar     : Provide a different gap char from '-'\n   --showtable   : Show the summary Ka/Ks table instead of the alignment.\n   --noheader     : Do not show the header for the table summary";
 
 const AlignType  default_aln_type   = local;
 const char Default_submat[] = "matricies/aa/BLOSUM50";
@@ -45,7 +46,7 @@ main (int argc, char ** argv )
                                 /* 106 is PHYLIP format in SQUID */
   char     *seq;		/* sequence                  */
   int       type;		/* kAmino, kDNA, kRNA, or kOtherSeq */
-  sequence  * seqs, * cds_seqs;
+  sequence  * seqs = NULL, * cds_seqs = NULL;
   sequence  tmp_seqs[2], tmp_cds_seqs[2];
   char  *optname;
   char  *optarg, *t;
@@ -54,7 +55,7 @@ main (int argc, char ** argv )
   int    seqct = 0,cdsct = 0;
   int    min_aln_len      = 0;
   int    do_oneline       = 0;
-  char   * output_filename = 0, *submat_file = 0;
+  char   * output_filename = 0, *submat_file = 0, *matrix_dir = 0;
   int    showaln = 1;
   int    showheader=1;
   FILE  *ofd, *fd;
@@ -102,8 +103,9 @@ main (int argc, char ** argv )
   while (Getopt(argc, argv, OPTIONS, NOPTIONS, usage, 
 		&optind, &optname, &optarg))
     {
-      if      (strcmp(optname, "--matrix") == 0)  submat_file = optarg; 
-      else if (strcmp(optname, "--quiet")   == 0)  be_quiet  = TRUE; 
+      if      (strcmp(optname, "--matrix") == 0)  submat_file = optarg;
+      else if (strcmp(optname, "--matrix-dir") == 0) matrix_dir = optarg;
+      else if (strcmp(optname, "--quiet")   == 0)  be_quiet  = TRUE;
       else if (strcmp(optname, "--gapopen") == 0)  {
 	Gapopen = atoi(optarg); 
 	if( Gapopen < 0 ) Gapopen *= -1;
@@ -141,24 +143,32 @@ main (int argc, char ** argv )
 
   if (argc - optind < 1) Die("%s\n", usage);
 
-  if( ! submat_file ) { 
-    if( (t = getenv("SUBOPTDIR")) != 0 || 
-	(t = getenv("SUBOPT_DIR")) != 0 ) {
-      submat_file = calloc(strlen(t) + 24, sizeof(char));
-      sprintf(submat_file, "%s/%s",t,Default_submat);
-    } else { 
-      submat_file = calloc(strlen((void *)Default_submat) + 24, sizeof(char));
-      sprintf(submat_file, "../%s",Default_submat);
+  {
+    char *resolved = resolve_matrix_file(submat_file, matrix_dir);
+    if( ! resolved ) {
+      fprintf(stderr,
+	      "Cannot locate substitution matrix '%s' in any matrix directory.\n"
+	      "Use --matrix <file>, --matrix-dir <dir>, or set $SUBOPT_MATRIX_DIR.\n",
+	      submat_file ? submat_file : DEFAULT_MATRIX_NAME);
+      exit(EXIT_FAILURE);
     }
+    submat_file = resolved; /* now heap-owned; freed near end of main */
   }
   /* open matrix */
   fd = fopen(submat_file, "r");
-  
+  if( ! fd ) {
+    fprintf(stderr, "Cannot open matrix file %s\n",submat_file);
+    free(submat_file);
+    exit(EXIT_FAILURE);
+  }
+
   if( ! ParsePAMFile(fd,&ScoringMatrix, &MatrixScale) ) {
     fprintf(stderr, "Cannot parse or open matrix file %s\n",submat_file);
+    fclose(fd);
     free(submat_file);
-    exit(EXIT_SUCCESS);
+    exit(EXIT_FAILURE);
   }
+  fclose(fd);
   
 
   if( output_filename && strlen(output_filename) != 1 &&
@@ -185,11 +195,11 @@ main (int argc, char ** argv )
       Die("Failed to open sequence file %s for reading", seqfile);
     
     while (ReadSeq(dbfp, dbfp->format, &seq, &sqinfo))
-    { 
-      FreeSequence(NULL, &sqinfo);
+    {
+      FreeSequence(seq, &sqinfo);
       seqct++;
     }
-    
+
 
     cds_seqs = (sequence *)calloc(seqct, sizeof(sequence));
     seqs     = (sequence *)calloc(seqct, sizeof(sequence));
@@ -232,6 +242,8 @@ main (int argc, char ** argv )
 	break;
     }
     
+    SeqfileClose(dbfp);
+
     if( seqct < 2 ) {
       fprintf(stderr,"Must have provided a valid file with at least 2 sequences in it");
       goto end;
@@ -239,7 +251,7 @@ main (int argc, char ** argv )
     
     for( i=0; i  < seqct; i++ ) {
       for(k=i+1; k < seqct; k++ ) {	
-	if( (opt_alignment = (alignment *)calloc(1,sizeof(alignment *))) == NULL) {
+	if( (opt_alignment = (alignment *)calloc(1,sizeof(alignment))) == NULL) {
 	  fprintf(stderr,"Could not allocate memory\n");
 	  goto end;
 	}
@@ -307,15 +319,21 @@ main (int argc, char ** argv )
   end:
   free(submat_file);
   Free2DArray((void **)ScoringMatrix,27);
-  for(i =0; i< seqct; i++ ) {
-    free(seqs[i].seqstr);
-    free(seqs[i].seqname);    
-    seqs[i].seqstr = seqs[i].seqname = 0;
+  if( seqs ) {
+    for(i =0; i< seqct; i++ ) {
+      free(seqs[i].seqstr);
+      free(seqs[i].seqname);
+      seqs[i].seqstr = seqs[i].seqname = 0;
+    }
+    free(seqs);
   }
-  for(i = 0; i < cdsct; i++) {
-    free(cds_seqs[i].seqstr);
-    free(cds_seqs[i].seqname);    
-    cds_seqs[i].seqstr = cds_seqs[i].seqname = 0;
+  if( cds_seqs ) {
+    for(i = 0; i < cdsct; i++) {
+      free(cds_seqs[i].seqstr);
+      free(cds_seqs[i].seqname);
+      cds_seqs[i].seqstr = cds_seqs[i].seqname = 0;
+    }
+    free(cds_seqs);
   }
   
   cleanup_matrix((void **)pwMLdist.N,NUM_PW_SEQS);

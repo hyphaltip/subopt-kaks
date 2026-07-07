@@ -228,6 +228,7 @@ int do_kaks_yn00(MSA * cds_alignment,
   }
   if(ctmp) free(ctmp);
   if(gap) free(gap);
+  if(skipcodon) free(skipcodon);
   if(com.fpatt) free(com.fpatt);
   if( space) free(space);
   com.ns = com.ls = 0;

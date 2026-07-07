@@ -9,8 +9,9 @@ struct opt_s OPTIONS[] = {
   { "-h",          TRUE, sqdARG_NONE },  
   { "-v",          TRUE, sqdARG_NONE },    
   { "--matrix",   FALSE, sqdARG_STRING },
-  { "--global",    FALSE, sqdARG_NONE},  
-  { "--optimal",   FALSE, sqdARG_NONE},  
+  { "--matrix-dir", FALSE, sqdARG_STRING },
+  { "--global",    FALSE, sqdARG_NONE},
+  { "--optimal",   FALSE, sqdARG_NONE},
   { "--informat", FALSE, sqdARG_STRING },
   { "--outformat", FALSE, sqdARG_STRING },
   { "--gapopen",  FALSE, sqdARG_STRING },
@@ -33,7 +34,7 @@ static char experts[] = "\n   --optimal     : show the optimal alignment.\n   --
 const int        default_cutoff_num = 5;
 const int        default_min_aln_len = 50;
 const AlignType  default_aln_type   = local;
-char * SUBMAT = "../matricies/aa/BLOSUM50";
+char * SUBMAT = NULL; /* NULL -> resolve_matrix_file() uses DEFAULT_MATRIX_NAME */
 
 main (int argc, char ** argv ) 
 {
@@ -46,6 +47,7 @@ main (int argc, char ** argv )
   sequence  seqs[2], cds_seqs[2];
   char  *optname;
   char  *optarg;
+  char  *matrix_dir = 0;
   int    optind;
   int    be_quiet;
   int    seqct = 0, cdsct = 0;
@@ -68,8 +70,9 @@ main (int argc, char ** argv )
   while (Getopt(argc, argv, OPTIONS, NOPTIONS, usage, 
 		&optind, &optname, &optarg))
     {
-      if      (strcmp(optname, "--matrix") == 0)  SUBMAT = optarg; 
-      else if (strcmp(optname, "--upper_bound")  == 0) 
+      if      (strcmp(optname, "--matrix") == 0)  SUBMAT = optarg;
+      else if (strcmp(optname, "--matrix-dir") == 0) matrix_dir = optarg;
+      else if (strcmp(optname, "--upper_bound")  == 0)
 	Upper_bound  = atoi(optarg); 
       else if (strcmp(optname, "--lower_bound")  == 0) 
 	Lower_bound  = atoi(optarg);
@@ -112,12 +115,19 @@ main (int argc, char ** argv )
   if (argc - optind != 1) Die("%s\n", usage);
   seqfile = argv[argc-1];
   
-  /* open matrix */
+  /* resolve and open matrix */
+  SUBMAT = resolve_matrix_file(SUBMAT, matrix_dir);
+  if( ! SUBMAT ) {
+    fprintf(stderr,
+	    "Cannot locate substitution matrix in any matrix directory.\n"
+	    "Use --matrix <file>, --matrix-dir <dir>, or set $SUBOPT_MATRIX_DIR.\n");
+    exit(EXIT_FAILURE);
+  }
   fd = fopen(SUBMAT, "r");
-  
-  if( ! ParsePAMFile(fd,&ScoringMatrix, &MatrixScale) ) {
+
+  if( ! fd || ! ParsePAMFile(fd,&ScoringMatrix, &MatrixScale) ) {
     fprintf(stderr, "Cannot parse or open matrix file %s\n",SUBMAT);
-    exit(EXIT_SUCCESS);
+    exit(EXIT_FAILURE);
   }
   
   /* Try to work around inability to autodetect from a pipe or .gz:

@@ -182,6 +182,10 @@ optimal_align ( const sequence * seq1,
   
   if( (best_loc = fill_matrix(seq1, seq2, &score_matrix, &direction_matrix))
       < 0 ) {
+    cleanup_matrix( (void **)score_matrix,     seq1->length +2);
+    cleanup_matrix( (void **)direction_matrix, seq1->length +2);
+    free(score_matrix);
+    free(direction_matrix);
     return -1;
   }
   
@@ -204,8 +208,8 @@ optimal_align ( const sequence * seq1,
   }
   
   
-  cleanup_matrix( (void **)score_matrix,        seq1->length +1);
-  cleanup_matrix( (void **)direction_matrix,    seq1->length +1);
+  cleanup_matrix( (void **)score_matrix,        seq1->length +2);
+  cleanup_matrix( (void **)direction_matrix,    seq1->length +2);
   free(score_matrix);
   free(direction_matrix);
   return rc;
