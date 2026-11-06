@@ -5,6 +5,8 @@
 <meta name="viewport" content="width=device-width, initial-scale=1">
 <title>kaks dN/dS</title>
 <meta name="description" content="Estimate dN/dS (Ka/Ks) for coding sequences in the browser: Yang-Nielsen 2000, Nei-Gojobori 1986 and codeml-style pairwise maximum likelihood, all 27 NCBI genetic codes. Nothing leaves your computer.">
+<script data-goatcounter="https://hyphaltip.goatcounter.com/count"
+        async src="//gc.zgo.at/count.js"></script>
 <style>
   :root {
     --bg: #ffffff; --fg: #1a1a1a; --muted: #5c6370; --line: #d8dde3;
@@ -127,6 +129,10 @@ ATG..."></textarea>
     With more than two sequences every pair is estimated independently; there is no tree-based estimate.
     Source and command-line tool: <a href="https://github.com/hyphaltip/subopt-kaks">github.com/hyphaltip/subopt-kaks</a>.</p>
     <p id="version"></p>
+    <p>Visits, and each press of Run (a count only, never the sequences), are counted anonymously with
+    <a href="https://www.goatcounter.com/">GoatCounter</a>: no cookies and no personal data, just the page address, the
+    referring site and the browser and screen size.
+    <span id="run-count" hidden><a href="https://hyphaltip.goatcounter.com/"><b id="run-count-n"></b> runs</a> so far.</span></p>
   </details>
 </main>
 
@@ -137,6 +143,20 @@ ATG..."></textarea>
   const status = $("status"), errBox = $("error"), runBtn = $("run");
   let lastTsv = "", lastJson = "";
   let files = [];   // File objects chosen with the picker; when non-empty the textarea is ignored
+
+  const GC = "https://hyphaltip.goatcounter.com";
+  // GoatCounter event: one count per press of Run, nothing about the data (the script may be blocked or still loading)
+  const countRun = () => { try { window.goatcounter?.count({ path: "kaks-run", title: "kaks run", event: true }); } catch { /* counting is optional */ } };
+  async function showRunCount() {
+    try {
+      const r = await fetch(`${GC}/counter/kaks-run.json`);
+      if (!r.ok) return; // public counts are off in the GoatCounter settings, or the counter is blocked
+      const n = (await r.json()).count;
+      if (!n) return;
+      $("run-count-n").textContent = n; $("run-count").hidden = false;
+    } catch { /* the line stays hidden */ }
+  }
+  showRunCount();
 
   const EXAMPLE = `>F35G8.1
 ATGGGACTCCAAGGGCGTGCAATTAGAATCCCATTACTCAATGCTTTCTATCACTTCTGGAGTGTCGGAATGAATATCGACTCGAATTTAACAGATTTTCAATGCGAGTACCCGGCGATTGACATAGGAATTCATATGAAAACCTTGTTAGCAGTCGGGTATGGTTTGGTGGGAGCCCTGAGCTTAGTTGGAAATCTTGCTGTATTGCTCATTGTGATATGCAGGAGAGAAATGCAAACAGTCACCAACATTTTTATAAGTAGCGTCTCCGCGGCTGACTTGGTAATAACAAGTTTCTCCTTATGGGCGACCCCATTAGCCTATTATCAACGGGTATGGCATTTCGGAAAGTATATGTGCTATATGGTTTCCATCATACAAGGCTTATCCCTCATGTGGGTACCACTGACCCTAGCAGCAGTTGCATTAGATCGCTACTCTCTAGTTGCTTCTCCGTTCCGTCAGCCAATGTCTAAAAAGACTTGCTTGCTGATCATCGCTGGAATCTGGATGGGAGGGTTTGCAGTTTTGTCGCCAATGATTCGGATGGTAGATTTTGTTGACAGCTATGGACCATGCCATTTTTGCCTGGAATCCTGGGACCACGACAAACAACACTACCGACTTTTCTACGGACTCTCGGTGCTCGTGATCCGCTCCGCAATTCCACTTGTTCTCATTTCCCTGTGCCACTGGAGAATCGCAGTTATTTTGAACACGCAGACGAAGAAATTCCAAACATTACGTAGTGCCAGCACAGTCACCCAATCGACTGACATCCGCCGTAAACAACGTCTTCAGACTCTCTTATTGGCAATGGTGGTCATATTTGCCGTGTCCAGTCTCCCACTGGACCTTTCAAATGTTCTTCAAGATTTGATCGTAGTGTACCAGGTTCGACCTGTCCCCGACAACGTTCGCCATTTTATCTTCTTCTTTTGCCATTGGACCGCAATGGCAGGAACACTTCTCAACCCGTTAGTCTACGCGTACTACAACGAAAACTTCCGGCGTCAGATTCAAACATGCTTTGGAGAAATGCGTGGACAGGGAGAGTTCAAGCGGGGGCTATACTCTATTGTCTCCGGCAGATACTCCTACCGAGCAGACGACGAGGAAAATCATCACAGACAAAACACACGTATCGAACTGGCTAACAATCAAACTGGTGATATCGAAGTTCTCAGAACGGATCTT
@@ -185,6 +205,7 @@ ATGAACGCCGACGCAAACCTGACGGATTTTCAGTGCGAGTATCCATCGATTGATCTCACTTTTCAAATTAAGCTTTTACT
       ? files.map((f) => ({ name: f.name, text: () => f.text() }))
       : [{ name: "pasted", text: async () => $("input").value }];
     if (!files.length && !$("input").value.trim()) { setError("Paste sequences or choose files first."); return; }
+    countRun();
     runBtn.disabled = true;
     const t0 = performance.now();
     const tsvRows = [];       // [FILE, ...cells]
