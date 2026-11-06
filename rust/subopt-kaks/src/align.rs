@@ -180,6 +180,7 @@ pub struct CodonAlignment {
 }
 
 /// Translate, align proteins, and back-translate to a codon alignment.
+#[allow(clippy::too_many_arguments)]
 pub fn align_cds_pair(
     name1: &str,
     cds1: &str,

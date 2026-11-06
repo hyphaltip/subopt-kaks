@@ -437,8 +437,8 @@ fn count_diffs(z1: &[u8], z2: &[u8], code: usize) -> (f64, f64, f64, f64) {
         let (mut sts, mut stv, mut nts, mut ntv) = (0.0f64, 0.0f64, 0.0f64, 0.0f64);
         let mut dmark = [-1i32; 3];
         let mut ndiff = 0usize;
-        for k in 0..3 {
-            if b[0][k] != b[1][k] {
+        for (k, (x, y)) in b[0].iter().zip(b[1].iter()).enumerate() {
+            if x != y {
                 dmark[ndiff] = k as i32;
                 ndiff += 1;
             }
@@ -649,8 +649,8 @@ fn difcodon_ng(iy0: usize, iy1: usize, code: usize) -> (f64, f64, f64, f64) {
 
     let mut dmark = [-1i32; 3];
     let mut ndiff = 0usize;
-    for k in 0..3 {
-        if b[0][k] != b[1][k] {
+    for (k, (x, y)) in b[0].iter().zip(b[1].iter()).enumerate() {
+        if x != y {
             dmark[ndiff] = k as i32;
             ndiff += 1;
         }
@@ -728,10 +728,7 @@ fn difcodon_ng(iy0: usize, iy1: usize, code: usize) -> (f64, f64, f64, f64) {
 /// Run all pairwise comparisons.
 pub fn run(data: &CodonData) -> Vec<PairResult> {
     let f3 = f3x4s(data);
-    let pi = match get_freqs(data, &f3) {
-        Ok(p) => p,
-        Err(_) => [0.0; NCODE],
-    };
+    let pi = get_freqs(data, &f3).unwrap_or([0.0; NCODE]);
     let kappa = get_kappa(data, 4.6);
 
     let mut out = Vec::new();

@@ -35,7 +35,7 @@ struct opt_s OPTIONS[] = {
 
 static char usage[] = "\nUsage: cds_zuker_align [-options] <sequence file>\n\n   Generate suboptimal alignments for a pair of CDS sequences using the protein sequences as the template.\n   Available options:\n   -h      : help; print version and usage info\n   -v      : verbose output -- show alignment path states.\n ";
 
-static char experts[] = "\n   --optimal     : show the optimal alignment.\n   --global      : generate global rather than the default local alignments\n   --lower_bound : Lower bound for scores to use when generating suboptimal\n                   alignments.\n   --upper_bound : Upper bound for scores to use when generating suboptimal\n                   alignments.\n   --minlen      : minimum length of suboptimal alignments to report.\n                   Default is 50\n   --max_to_show : Maximum number of alignments to show.  Default is 5.\n   --gapopen num : Gap open penalty.  Default is -10.\n   --gapext      : Gap extension penalty.  Default is -2.\n   --informat    : Format of the input sequence file database.\n   --outformat   : Format of the output sequence alignments.\n   --output      : specify an output file instead or writing to STDOUT\n   --matrix      : Substitution matrix: a file path, or a bare name (e.g.\n                   BLOSUM62) resolved within a matrix directory. Default BLOSUM62.\n   --matrix-dir  : Directory to search for named matrices (overrides\n                   $SUBOPT_MATRIX_DIR / $SUBOPTDIR).\n   --gapchar     : Provide a different gap char from '-'\n   --separate    : Write each alignment in a separate file\n";
+static char experts[] = "\n   --optimal     : show the optimal alignment.\n   --global      : generate global rather than the default local alignments\n   --lower_bound : Lower bound for scores to use when generating suboptimal\n                   alignments.\n   --upper_bound : Upper bound for scores to use when generating suboptimal\n                   alignments.\n   --minlen      : minimum length (aligned protein columns) of suboptimal\n                   alignments to report.  Default is 0 (no filter).\n   --max_to_show : Maximum number of alignments to show.  Default is 5.\n   --gapopen num : Gap open penalty.  Default is -10.\n   --gapext      : Gap extension penalty.  Default is -2.\n   --informat    : Format of the input sequence file database.\n   --outformat   : Format of the output sequence alignments.\n   --output      : specify an output file instead or writing to STDOUT\n   --matrix      : Substitution matrix: a file path, or a bare name (e.g.\n                   BLOSUM62) resolved within a matrix directory. Default BLOSUM62.\n   --matrix-dir  : Directory to search for named matrices (overrides\n                   $SUBOPT_MATRIX_DIR / $SUBOPTDIR).\n   --gapchar     : Provide a different gap char from '-'\n   --separate    : Write each alignment in a separate file\n";
 
 const int        default_cutoff_num = 5;
 const int        default_min_aln_len = 50;
@@ -128,7 +128,6 @@ main (int argc, char ** argv )
     gettimeofday(&tp, NULL);
     sprintf(output_filename,"%s_%ld",seqfile, (long)tp.tv_sec);
   }
-  (void)min_aln_len; /* parsed for compatibility; not applied */
 
   {
     char *resolved = resolve_matrix_file(submat_file, matrix_dir);
@@ -203,6 +202,8 @@ main (int argc, char ** argv )
   sfname = calloc(strlen(output_filename) + 24,sizeof(char));
 
   for( i = 0; i < aln_count; i++ ) {
+    if( min_aln_len > 0 && alignments[i]->msa->alen < min_aln_len )
+      continue; /* --minlen: skip short suboptimal alignments */
     cleanup_alignment(cds_aln);
     cds_aln = NULL;
     rc = mrtrans(alignments[i], cds_seqs, &cds_aln,0);

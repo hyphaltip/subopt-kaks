@@ -39,7 +39,7 @@ struct opt_s OPTIONS[] = {
 
 static char usage[] = "\nUsage: yn00_zuker_align [-options] <sequence file>\n\n   Generate suboptimal alignments for a pair of sequences.\n   Available options:\n   -h      : help; print version and usage info\n   -v      : verbose output -- show alignment path states.\n ";
 
-static char experts[] = "\n   --optimal     : show the optimal alignment.\n   --global      : generate global rather than the default local alignments\n   --lower_bound : Lower bound for scores to use when generating suboptimal\n                   alignments.\n   --upper_bound : Upper bound for scores to use when generating suboptimal\n                   alignments.\n   --minlen      : minimum length of suboptimal alignments to report.\n                   Default is 50\n   --max_to_show : Maximum number of alignments to show.  Default is 1000.\n   --gapopen num : Gap open penalty.  Default is -10.\n   --gapext      : Gap extension penalty.  Default is -2.\n   --informat    : Format of the input sequence file database.\n   --output      : specify an output file instead of summary.dat\n   --matrix      : Substitution matrix: a file path, or a bare name (e.g.\n                   BLOSUM62) resolved within a matrix directory. Default BLOSUM62.\n   --matrix-dir  : Directory to search for named matrices (overrides\n                   $SUBOPT_MATRIX_DIR / $SUBOPTDIR).\n   --gapchar     : Provide a different gap char from '-'\n   --separate    : Write each alignment in a separate file\n   --sorted      : Return alignments sorted by score.\n   --cutoff_percent: Only show top N percent of alignments.\n   --noheader    : Do not show header in summary table output\n";
+static char experts[] = "\n   --optimal     : show the optimal alignment.\n   --global      : generate global rather than the default local alignments\n   --lower_bound : Lower bound for scores to use when generating suboptimal\n                   alignments.\n   --upper_bound : Upper bound for scores to use when generating suboptimal\n                   alignments.\n   --minlen      : minimum length (aligned protein columns) of suboptimal\n                   alignments to report.  Default is 0 (no filter).\n   --max_to_show : Maximum number of alignments to show.  Default is 1000.\n   --gapopen num : Gap open penalty.  Default is -10.\n   --gapext      : Gap extension penalty.  Default is -2.\n   --informat    : Format of the input sequence file database.\n   --output      : specify an output file instead of summary.dat\n   --matrix      : Substitution matrix: a file path, or a bare name (e.g.\n                   BLOSUM62) resolved within a matrix directory. Default BLOSUM62.\n   --matrix-dir  : Directory to search for named matrices (overrides\n                   $SUBOPT_MATRIX_DIR / $SUBOPTDIR).\n   --gapchar     : Provide a different gap char from '-'\n   --separate    : Write each alignment in a separate file\n   --sorted      : Return alignments sorted by score.\n   --cutoff_percent: Only show top N percent of alignments.\n   --noheader    : Do not show header in summary table output\n";
 
 static char      Default_output_name[] = "summary.dat";
 const int        default_max_alignments = 1000;
@@ -179,7 +179,6 @@ main (int argc, char ** argv )
     exit(EXIT_FAILURE);
   }
   fclose(fd);
-  (void)min_aln_len;    /* parsed for compatibility; not applied */
   (void)separate_files; /* parsed for compatibility; not applied */
   /* Try to work around inability to autodetect from a pipe or .gz:
    * assume FASTA format
@@ -245,7 +244,9 @@ main (int argc, char ** argv )
   }
   
   for( i = 0; i < aln_count; i++ ) {
-     rc = mrtrans(alignments[i], cds_seqs, &cds_aln,1);
+    if( min_aln_len > 0 && alignments[i]->msa->alen < min_aln_len )
+      continue; /* --minlen: skip short suboptimal alignments (freed at end) */
+    rc = mrtrans(alignments[i], cds_seqs, &cds_aln,1);
      
     if( rc != 0  ) { 
       fprintf(stderr, "Could not map the coding sequence to the protein alignemnt for aln %d: %d\n",i,rc);

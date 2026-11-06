@@ -27,7 +27,7 @@ struct opt_s OPTIONS[] = {
 
 static char usage[] = "\nUsage: suboptaligner [-options] <sequence file>\n\n   Generate suboptimal alignments for a pair of sequences.\n   Available options:\n   -h      : help; print version and usage info\n   -v      : verbose output -- show alignment path states.\n";
 
-static char experts[] = "\n   --optimal     : show the optimal alignment.\n   --global      : generate global rather than the default local alignments\n   --lower_bound : Lower bound for scores to use when generating suboptimal\n                   alignments.\n   --upper_bound : Upper bound for scores to use when generating suboptimal\n                   alignments.\n   --minlen      : minimum length of suboptimal alignments to report.\n                   Default is 50\n   --max_to_show : Maximum number of alignments to show.  Default is 5.\n   --gapopen     : Gap open penalty.  Default is -10.\n   --gapext      : Gap extension penalty.  Default is -2.\n   --informat    : Format of the input sequence file database.\n   --outformat   : Format of the output sequence alignments.\n   --matrix      : Substitution matrix: a file path, or a bare name (e.g.\n                   BLOSUM62) resolved within a matrix directory. Default BLOSUM62.\n   --matrix-dir  : Directory to search for named matrices (overrides\n                   $SUBOPT_MATRIX_DIR / $SUBOPTDIR).\n   --gapchar    : Provide a different gap char from '-'\n";
+static char experts[] = "\n   --optimal     : show the optimal alignment.\n   --global      : generate global rather than the default local alignments\n   --lower_bound : Lower bound for scores to use when generating suboptimal\n                   alignments.\n   --upper_bound : Upper bound for scores to use when generating suboptimal\n                   alignments.\n   --minlen      : minimum length (aligned protein columns) of suboptimal\n                   alignments to report.  Default is 0 (no filter).\n   --max_to_show : Maximum number of alignments to show.  Default is 5.\n   --gapopen     : Gap open penalty.  Default is -10.\n   --gapext      : Gap extension penalty.  Default is -2.\n   --informat    : Format of the input sequence file database.\n   --outformat   : Format of the output sequence alignments.\n   --matrix      : Substitution matrix: a file path, or a bare name (e.g.\n                   BLOSUM62) resolved within a matrix directory. Default BLOSUM62.\n   --matrix-dir  : Directory to search for named matrices (overrides\n                   $SUBOPT_MATRIX_DIR / $SUBOPTDIR).\n   --gapchar    : Provide a different gap char from '-'\n";
 
 const int        default_cutoff_num = 5;
 const int        default_min_aln_len = 50;
@@ -122,7 +122,6 @@ main (int argc, char ** argv )
     exit(EXIT_FAILURE);
   }
   fclose(fd);
-  (void)min_aln_len; /* parsed for compatibility; not applied */
   
   /* Try to work around inability to autodetect from a pipe or .gz:
    * assume FASTA format
@@ -178,6 +177,8 @@ main (int argc, char ** argv )
   }
 
   for( i = 0; i < aln_count; i++ ) {
+    if( min_aln_len > 0 && alignments[i]->msa->alen < min_aln_len )
+      continue; /* --minlen: skip short suboptimal alignments */
     if( ofmt >= 100 ) { 
       MSAFileWrite(stdout, alignments[i]->msa,ofmt,do_oneline);
     } else { 

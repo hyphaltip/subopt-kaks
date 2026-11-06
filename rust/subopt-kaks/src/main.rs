@@ -2,9 +2,9 @@
 //!
 //! A Rust port of the subopt-kaks C tools with a single command-line-driven binary
 //! and choice of output format. Two input modes:
-//!   * `--prealigned` : input is an in-frame codon alignment (like `yn00_cds_prealigned`)
-//!   * default        : input is unaligned CDS; sequences are translated, aligned on the
-//!                      protein, and back-translated (like `yn00_cds_optimal`).
+//! * `--prealigned` : input is an in-frame codon alignment (like `yn00_cds_prealigned`)
+//! * default        : input is unaligned CDS; sequences are translated, aligned on the
+//!   protein, and back-translated (like `yn00_cds_optimal`).
 
 mod align;
 mod estimate;
