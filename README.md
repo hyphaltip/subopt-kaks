@@ -68,19 +68,46 @@ time. The bundled matrices are in `matricies/aa` and `matricies/nt`.
 `--gapopen` and `--gapext` take a penalty magnitude. `--gapopen 10` and
 `--gapopen -10` mean the same thing (a penalty of 10). Defaults are 10 and 2.
 
-## Rust port
+## Rust port: `kaks` (recommended for dN/dS)
 
-`rust/subopt-kaks` is a single-binary reimplementation (`kaks`) with flags
-only, embedded BLOSUM62 and genetic-code tables, FASTA/PHYLIP input, and
-TSV/table/JSON output. Its `--prealigned` path reproduces
-`yn00_cds_prealigned` byte-for-byte on the bundled test pair. See
-`rust/subopt-kaks/README.md`.
+`rust/subopt-kaks` is a single-binary reimplementation of `yn00_cds_optimal`
+and `yn00_cds_prealigned`: flags only, embedded BLOSUM62 and genetic-code
+tables, FASTA/PHYLIP input from a file or stdin, TSV/table/JSON output, YN00
+and NG86 estimators, six genetic codes. Its `--prealigned` path reproduces
+`yn00_cds_prealigned` byte-for-byte on the bundled test pair. The Zuker
+suboptimal-alignment tools exist only in C.
+
+### Build and install
+
+Requires a Rust toolchain (`cargo`).
 
 ```sh
-make rust                      # cargo build --release
-make test-rust                 # cargo test + regression tests
-make install-rust PREFIX=~/.local
+make rust                              # build -> rust/subopt-kaks/target/release/kaks
+make test-rust                         # cargo test + regression tests
+make install-rust                      # copy kaks into ./bin
+make install-rust PREFIX=/usr/local    # -> /usr/local/bin/kaks
+make install-rust BINDIR=$HOME/bin     # any bin directory
+make uninstall-rust
 ```
+
+Or from `rust/subopt-kaks/`: `make`, `make test`, `make install [PREFIX=|BINDIR=]`.
+Only the one binary is installed; it needs no data files or environment variables.
+
+### Usage
+
+```sh
+kaks input.cds.fasta                        # unaligned CDS -> align -> dN/dS
+kaks --prealigned input.cds.aln             # in-frame codon alignment
+kaks --method both --format table in.fasta  # YN00 + NG86, readable columns
+cat in.fasta | kaks --format json -         # JSON from stdin
+kaks --aln-mode local --matrix BLOSUM45 --gap-open 10 --gap-ext 2 in.fasta
+kaks --genetic-code 1 in.fasta              # vertebrate mitochondrial
+```
+
+Every pair of sequences in the input is reported. Output columns are
+`SEQ1 SEQ2 dN dS OMEGA N S kappa t LENGTH` (plus `SE_dN SE_dS NG_dN NG_dS
+NG_omega` with `--method both`). `kaks --help` lists all options; see
+`rust/subopt-kaks/README.md` for details.
 
 ## Tests
 

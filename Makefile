@@ -6,7 +6,7 @@
 #                       (PREFIX defaults to this directory, giving ./bin)
 #   make install PREFIX=/usr/local
 #   make rust           build the Rust port (rust/subopt-kaks, binary `kaks`)
-#   make install-rust   cargo install kaks into $(PREFIX)/bin
+#   make install-rust   copy the built kaks binary into $(PREFIX)/bin
 #   make clean          remove build products (keeps squid's configure output)
 #   make distclean      also remove squid's generated Makefile/config
 #
@@ -21,7 +21,7 @@ CC     ?= gcc
 export CC PREFIX
 
 .PHONY: all squid tools test install uninstall rust test-rust install-rust \
-        clean distclean
+        uninstall-rust clean distclean
 
 all: tools
 
@@ -47,16 +47,19 @@ install: tools
 uninstall:
 	$(MAKE) -C $(SRC) uninstall
 
-# --- Rust port -----------------------------------------------------------
+# --- Rust port (binary `kaks`) --------------------------------------------
+# PREFIX/BINDIR/DESTDIR are passed through; see rust/subopt-kaks/Makefile.
 rust:
-	cd $(RUST) && cargo build --release
+	$(MAKE) -C $(RUST) build
 
 test-rust:
-	cd $(RUST) && cargo test --release
-	tst/run_tests.sh --rust $(CURDIR)/$(RUST)/target/release
+	$(MAKE) -C $(RUST) test
 
 install-rust:
-	cargo install --path $(RUST) --root $(PREFIX)
+	$(MAKE) -C $(RUST) install PREFIX=$(PREFIX)
+
+uninstall-rust:
+	$(MAKE) -C $(RUST) uninstall PREFIX=$(PREFIX)
 
 # --- cleanup -------------------------------------------------------------
 clean:
@@ -67,4 +70,4 @@ clean:
 distclean: clean
 	-[ -f $(SQUID)/Makefile ] && $(MAKE) -C $(SQUID) distclean
 	rm -rf bin
-	-cd $(RUST) && cargo clean
+	-$(MAKE) -C $(RUST) clean
