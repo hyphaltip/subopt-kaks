@@ -99,8 +99,9 @@ Only the one binary is installed; it needs no data files or environment variable
 
 WebAssembly: `make -C rust/subopt-kaks wasi` builds the same CLI for any WASI
 runtime, and `make web` + `make serve-web` build and serve a browser page
-(`web/index.html`) that runs every estimator locally. See
-`rust/subopt-kaks/README.md`.
+(`web/index.html`) that runs every estimator locally on one or many uploaded
+files. It is published at https://hyphaltip.github.io/subopt-kaks/ by the
+Pages workflow on every push. See `rust/subopt-kaks/README.md`.
 
 ### Usage
 

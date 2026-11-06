@@ -60,8 +60,10 @@ Two builds, no code changes needed for either:
   wasmer, or Node's `node:wasi`). Output is byte-identical to the native binary.
 * **Browser** (`make web`): builds the library with `--features wasm` for
   `wasm32-unknown-unknown` and runs `wasm-bindgen` to produce `../../web/pkg/`.
-  `../../web/index.html` is a self-contained page (paste or load sequences, pick
-  method, genetic code and codon frequencies, run, download TSV/JSON). Serve
+  `../../web/index.html` is a self-contained page: paste sequences or choose
+  any number of alignment files, pick method, genetic code and codon
+  frequencies, run, and download one TSV/JSON table with a `FILE` column
+  (live at https://hyphaltip.github.io/subopt-kaks/). Serve
   the `web/` directory over HTTP, for example `make -C ../.. serve-web`, then
   open http://localhost:8000. Nothing is uploaded; all computation is local.
   `.github/workflows/pages.yml` publishes it with GitHub Pages once Pages is

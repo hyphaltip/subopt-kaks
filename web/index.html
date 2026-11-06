@@ -48,7 +48,7 @@
   table { border-collapse: collapse; width: 100%; font-size: .9rem; }
   th, td { padding: 6px 10px; border-bottom: 1px solid var(--line); text-align: right; white-space: nowrap; font-family: var(--mono); }
   th { position: sticky; top: 0; background: var(--panel); }
-  td:first-child, td:nth-child(2), th:first-child, th:nth-child(2) { text-align: left; }
+  td:first-child, td:nth-child(2), td:nth-child(3), th:first-child, th:nth-child(2), th:nth-child(3) { text-align: left; }
   pre { background: var(--panel); border: 1px solid var(--line); border-radius: 6px; padding: 10px; overflow-x: auto; font-size: .85rem; }
   details { margin-top: 20px; color: var(--muted); }
   summary { cursor: pointer; color: var(--fg); }
@@ -62,15 +62,18 @@
 
   <div class="grid">
     <section>
-      <label style="justify-content:flex-start"><span>Sequences (FASTA or PHYLIP)</span>
-        <input type="file" id="file" accept=".fa,.fasta,.fas,.fna,.aln,.phy,.txt"></label>
-      <textarea id="input" spellcheck="false" placeholder=">seq1
+      <label style="justify-content:flex-start"><span>Sequence files (FASTA or PHYLIP), one or many</span>
+        <input type="file" id="file" multiple accept=".fa,.fasta,.fas,.fna,.aln,.phy,.txt,.cds,.nuc"></label>
+      <div class="status" id="filelist"></div>
+      <textarea id="input" spellcheck="false" placeholder="…or paste one file's sequences here
+>seq1
 ATG...
 >seq2
 ATG..."></textarea>
       <div class="row">
         <button class="primary" id="run" disabled>Run</button>
         <button id="example">Load example pair</button>
+        <button id="clear">Clear</button>
         <button id="dl-tsv" disabled>Download TSV</button>
         <button id="dl-json" disabled>Download JSON</button>
         <span class="status" id="status">loading WebAssembly module…</span>
@@ -133,6 +136,7 @@ ATG..."></textarea>
   const $ = (id) => document.getElementById(id);
   const status = $("status"), errBox = $("error"), runBtn = $("run");
   let lastTsv = "", lastJson = "";
+  let files = [];   // File objects chosen with the picker; when non-empty the textarea is ignored
 
   const EXAMPLE = `>F35G8.1
 ATGGGACTCCAAGGGCGTGCAATTAGAATCCCATTACTCAATGCTTTCTATCACTTCTGGAGTGTCGGAATGAATATCGACTCGAATTTAACAGATTTTCAATGCGAGTACCCGGCGATTGACATAGGAATTCATATGAAAACCTTGTTAGCAGTCGGGTATGGTTTGGTGGGAGCCCTGAGCTTAGTTGGAAATCTTGCTGTATTGCTCATTGTGATATGCAGGAGAGAAATGCAAACAGTCACCAACATTTTTATAAGTAGCGTCTCCGCGGCTGACTTGGTAATAACAAGTTTCTCCTTATGGGCGACCCCATTAGCCTATTATCAACGGGTATGGCATTTCGGAAAGTATATGTGCTATATGGTTTCCATCATACAAGGCTTATCCCTCATGTGGGTACCACTGACCCTAGCAGCAGTTGCATTAGATCGCTACTCTCTAGTTGCTTCTCCGTTCCGTCAGCCAATGTCTAAAAAGACTTGCTTGCTGATCATCGCTGGAATCTGGATGGGAGGGTTTGCAGTTTTGTCGCCAATGATTCGGATGGTAGATTTTGTTGACAGCTATGGACCATGCCATTTTTGCCTGGAATCCTGGGACCACGACAAACAACACTACCGACTTTTCTACGGACTCTCGGTGCTCGTGATCCGCTCCGCAATTCCACTTGTTCTCATTTCCCTGTGCCACTGGAGAATCGCAGTTATTTTGAACACGCAGACGAAGAAATTCCAAACATTACGTAGTGCCAGCACAGTCACCCAATCGACTGACATCCGCCGTAAACAACGTCTTCAGACTCTCTTATTGGCAATGGTGGTCATATTTGCCGTGTCCAGTCTCCCACTGGACCTTTCAAATGTTCTTCAAGATTTGATCGTAGTGTACCAGGTTCGACCTGTCCCCGACAACGTTCGCCATTTTATCTTCTTCTTTTGCCATTGGACCGCAATGGCAGGAACACTTCTCAACCCGTTAGTCTACGCGTACTACAACGAAAACTTCCGGCGTCAGATTCAAACATGCTTTGGAGAAATGCGTGGACAGGGAGAGTTCAAGCGGGGGCTATACTCTATTGTCTCCGGCAGATACTCCTACCGAGCAGACGACGAGGAAAATCATCACAGACAAAACACACGTATCGAACTGGCTAACAATCAAACTGGTGATATCGAAGTTCTCAGAACGGATCTT
@@ -161,45 +165,75 @@ ATGAACGCCGACGCAAACCTGACGGATTTTCAGTGCGAGTATCCATCGATTGATCTCACTTTTCAAATTAAGCTTTTACT
     setTimeout(() => URL.revokeObjectURL(a.href), 1000);
   }
 
-  function opts(format) {
+  function opts(text, format) {
     return [
-      $("input").value, $("prealigned").checked, $("method").value, $("cf").value,
+      text, $("prealigned").checked, $("method").value, $("cf").value,
       Number($("code").value), $("aln").value, Number($("gapopen").value), Number($("gapext").value),
       $("common").checked, format, $("matrix").value,
     ];
   }
 
-  function run() {
+  const yield_ = () => new Promise((r) => setTimeout(r, 0));
+
+  // Run every job (one per file, or the textarea) and merge the results with a
+  // leading FILE column so a batch comes back as one table.
+  async function run() {
     setError("");
     $("tablewrap").hidden = true;
     $("dl-tsv").disabled = $("dl-json").disabled = true;
-    if (!$("input").value.trim()) { setError("Paste or load sequences first."); return; }
-    status.textContent = "running…";
+    const jobs = files.length
+      ? files.map((f) => ({ name: f.name, text: () => f.text() }))
+      : [{ name: "pasted", text: async () => $("input").value }];
+    if (!files.length && !$("input").value.trim()) { setError("Paste sequences or choose files first."); return; }
     runBtn.disabled = true;
-    // let the status repaint before the synchronous call
-    setTimeout(() => {
-      const t0 = performance.now();
+    const t0 = performance.now();
+    const tsvRows = [];       // [FILE, ...cells]
+    let header = null;
+    const jsonRows = [];
+    const errors = [];
+    let npairs = 0;
+    for (let i = 0; i < jobs.length; i++) {
+      status.textContent = `running ${i + 1} / ${jobs.length}: ${jobs[i].name}`;
+      await yield_();
       try {
-        lastTsv = kaks_run(...opts("tsv"));
-        lastJson = kaks_run(...opts("json"));
-        renderTable(lastTsv);
-        const n = lastTsv.trim().split("\n").length - 1;
-        status.textContent = `${n} pair${n === 1 ? "" : "s"} in ${((performance.now() - t0) / 1000).toFixed(2)} s`;
-        $("dl-tsv").disabled = $("dl-json").disabled = false;
+        const text = await jobs[i].text();
+        const tsv = kaks_run(...opts(text, "tsv"));
+        const lines = tsv.trim().split("\n");
+        header ??= lines[0].split("\t");
+        lines.slice(1).forEach((l) => tsvRows.push([jobs[i].name, ...l.split("\t")]));
+        JSON.parse(kaks_run(...opts(text, "json"))).forEach((r) => jsonRows.push({ file: jobs[i].name, ...r }));
+        npairs += lines.length - 1;
       } catch (e) {
-        status.textContent = "";
-        setError(String(e && e.message ? e.message : e));
-      } finally {
-        runBtn.disabled = false;
+        errors.push(`${jobs[i].name}: ${e && e.message ? e.message : e}`);
       }
-    }, 0);
+    }
+    runBtn.disabled = false;
+    if (errors.length) setError(errors.join("\n"));
+    if (!header) { status.textContent = ""; return; }
+    const cols = ["FILE", ...header];
+    lastTsv = [cols.join("\t"), ...tsvRows.map((r) => r.join("\t"))].join("\n") + "\n";
+    lastJson = JSON.stringify(jsonRows, null, 1);
+    renderTable(lastTsv);
+    const secs = ((performance.now() - t0) / 1000).toFixed(2);
+    status.textContent = `${npairs} pair${npairs === 1 ? "" : "s"} from ${jobs.length} file${jobs.length === 1 ? "" : "s"} in ${secs} s` +
+      (errors.length ? `, ${errors.length} failed` : "");
+    $("dl-tsv").disabled = $("dl-json").disabled = false;
+  }
+
+  function showFiles() {
+    $("filelist").textContent = files.length
+      ? `${files.length} file${files.length === 1 ? "" : "s"} selected: ` + files.map((f) => f.name).join(", ")
+      : "";
   }
 
   $("file").addEventListener("change", async (ev) => {
-    const f = ev.target.files[0];
-    if (f) { $("input").value = await f.text(); }
+    files = Array.from(ev.target.files);
+    showFiles();
+    // a single file is also shown in the box so it can be edited
+    if (files.length === 1) { $("input").value = await files[0].text(); files = []; $("file").value = ""; showFiles(); }
   });
-  $("example").addEventListener("click", () => { $("input").value = EXAMPLE; $("prealigned").checked = false; });
+  $("example").addEventListener("click", () => { $("input").value = EXAMPLE; $("prealigned").checked = false; files = []; $("file").value = ""; showFiles(); });
+  $("clear").addEventListener("click", () => { $("input").value = ""; files = []; $("file").value = ""; showFiles(); setError(""); $("tablewrap").hidden = true; status.textContent = "ready"; });
   $("run").addEventListener("click", run);
   $("dl-tsv").addEventListener("click", () => download("kaks.tsv", lastTsv, "text/tab-separated-values"));
   $("dl-json").addEventListener("click", () => download("kaks.json", lastJson, "application/json"));
