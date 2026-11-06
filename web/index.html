@@ -90,6 +90,8 @@
   input[type=password], input[type=text], textarea.small { font: inherit; padding: 4px 6px; border: 1px solid var(--line); border-radius: 4px; background: var(--bg); color: var(--fg); }
   #vega { min-height: 40px; background: #fff; border: 1px solid var(--line); border-radius: 6px; padding: 6px; overflow-x: auto; }
   details { margin-top: 20px; color: var(--muted); }
+  #inputbox, #tablebox, #filebox, #rawbox { margin-top: 8px; color: var(--fg); }
+  #inputbox > summary, #tablebox > summary { cursor: pointer; padding: 4px 0; }
   summary { cursor: pointer; color: var(--fg); }
   a { color: var(--accent); }
 </style>
@@ -121,14 +123,17 @@
 
   <div class="grid">
     <section>
-      <label style="justify-content:flex-start"><span>Sequence files (FASTA or PHYLIP), one or many</span>
-        <input type="file" id="file" multiple accept=".fa,.fasta,.fas,.fna,.aln,.phy,.txt,.cds,.nuc"></label>
-      <div class="status" id="filelist"></div>
-      <textarea id="input" spellcheck="false" placeholder="…or paste one file's sequences here
+      <details id="inputbox" open>
+        <summary id="inputsum"><b>Input</b> <span class="status" id="inputinfo">no files selected</span></summary>
+        <label style="justify-content:flex-start"><span>Sequence files (FASTA or PHYLIP), one or many</span>
+          <input type="file" id="file" multiple accept=".fa,.fasta,.fas,.fna,.aln,.phy,.txt,.cds,.nuc"></label>
+        <details id="filebox" hidden><summary class="status" id="filesum"></summary><div class="status" id="filelist" style="max-height:120px;overflow:auto;font-family:var(--mono);font-size:.75rem;white-space:pre"></div></details>
+        <textarea id="input" spellcheck="false" placeholder="…or paste one file's sequences here
 >seq1
 ATG...
 >seq2
 ATG..."></textarea>
+      </details>
       <div class="row">
         <button class="primary" id="run" disabled>Run</button>
         <button id="example">Load example pair</button>
@@ -139,8 +144,10 @@ ATG..."></textarea>
         <span class="status" id="status">loading WebAssembly module…</span>
       </div>
       <div class="error" id="error"></div>
-      <div class="tablewrap" id="tablewrap" hidden><table id="table"></table></div>
-      <details id="rawbox" hidden><summary class="status">Raw TSV output</summary><pre id="raw"></pre></details>
+      <details id="tablebox" hidden open><summary id="tablesum"><b>Results table</b></summary>
+        <div class="tablewrap" id="tablewrap"><table id="table"></table></div>
+        <details id="rawbox"><summary class="status">Raw TSV output</summary><pre id="raw"></pre></details>
+      </details>
 
       <section id="plots" hidden>
         <h2 style="font-size:1.15rem;margin:20px 0 4px">Plots</h2>
@@ -284,7 +291,6 @@ ATGAACGCCGACGCAAACCTGACGGATTTTCAGTGCGAGTATCCATCGATTGATCTCACTTTTCAAATTAAGCTTTTACT
     rows[0].forEach((h) => { const th = document.createElement("th"); th.textContent = h; thead.appendChild(th); });
     const tbody = table.createTBody();
     rows.slice(1).forEach((r) => { const tr = tbody.insertRow(); r.forEach((c) => { tr.insertCell().textContent = c; }); });
-    $("tablewrap").hidden = false;
   }
 
   function download(name, text, type) {
@@ -309,7 +315,7 @@ ATGAACGCCGACGCAAACCTGACGGATTTTCAGTGCGAGTATCCATCGATTGATCTCACTTTTCAAATTAAGCTTTTACT
   // leading FILE column so a batch comes back as one table.
   async function run() {
     setError("");
-    $("tablewrap").hidden = true;
+    $("tablebox").hidden = true;
     $("dl-tsv").disabled = $("dl-json").disabled = true;
     const jobs = files.length
       ? files.map((f) => ({ name: f.name, text: () => f.text() }))
@@ -345,7 +351,13 @@ ATGAACGCCGACGCAAACCTGACGGATTTTCAGTGCGAGTATCCATCGATTGATCTCACTTTTCAAATTAAGCTTTTACT
     lastTsv = [cols.join("\t"), ...tsvRows.map((r) => r.join("\t"))].join("\n") + "\n";
     lastJson = JSON.stringify(jsonRows, null, 1);
     renderTable(lastTsv);
-    $("raw").textContent = lastTsv; $("rawbox").hidden = false;
+    $("raw").textContent = lastTsv;
+    $("tablebox").hidden = false;
+    $("tablesum").innerHTML = `<b>Results table</b> <span class="status">${npairs} pair${npairs === 1 ? "" : "s"}</span>`;
+    // a batch run is about the plots: fold the input and the table away, they stay one click from view
+    const batch = jobs.length >= 2;
+    $("tablebox").open = !batch;
+    $("inputbox").open = !batch;
     const secs = ((performance.now() - t0) / 1000).toFixed(2);
     status.textContent = `${npairs} pair${npairs === 1 ? "" : "s"} from ${jobs.length} file${jobs.length === 1 ? "" : "s"} in ${secs} s` +
       (errors.length ? `, ${errors.length} failed` : "");
@@ -451,9 +463,11 @@ ATGAACGCCGACGCAAACCTGACGGATTTTCAGTGCGAGTATCCATCGATTGATCTCACTTTTCAAATTAAGCTTTTACT
   $("ai-render").addEventListener("click", renderCurrentSpec);
 
   function showFiles() {
-    $("filelist").textContent = files.length
-      ? `${files.length} file${files.length === 1 ? "" : "s"} selected: ` + files.map((f) => f.name).join(", ")
-      : "";
+    const n = files.length;
+    $("inputinfo").textContent = n ? `${n} file${n === 1 ? "" : "s"} selected` : ($("input").value.trim() ? "pasted sequences" : "no files selected");
+    $("filebox").hidden = !n;
+    $("filesum").textContent = n ? `show the ${n} file name${n === 1 ? "" : "s"}` : "";
+    $("filelist").textContent = files.map((f) => f.name).join("\n");
   }
 
   (function () {
@@ -490,7 +504,7 @@ ATGAACGCCGACGCAAACCTGACGGATTTTCAGTGCGAGTATCCATCGATTGATCTCACTTTTCAAATTAAGCTTTTACT
     } catch (e) { status.textContent = ""; setError("could not load the example files: " + e); }
   });
   $("example").addEventListener("click", () => { $("input").value = EXAMPLE; $("prealigned").checked = false; files = []; $("file").value = ""; showFiles(); });
-  $("clear").addEventListener("click", () => { $("input").value = ""; files = []; $("file").value = ""; showFiles(); setError(""); $("tablewrap").hidden = true; $("rawbox").hidden = true; $("plots").hidden = true; lastRows = []; lastPlots = null; status.textContent = "ready"; });
+  $("clear").addEventListener("click", () => { $("input").value = ""; files = []; $("file").value = ""; showFiles(); setError(""); $("tablebox").hidden = true; $("inputbox").open = true; $("plots").hidden = true; lastRows = []; lastPlots = null; status.textContent = "ready"; });
   $("run").addEventListener("click", run);
   $("dl-tsv").addEventListener("click", () => download("kaks.tsv", lastTsv, "text/tab-separated-values"));
   $("dl-json").addEventListener("click", () => download("kaks.json", lastJson, "application/json"));

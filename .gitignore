@@ -40,3 +40,4 @@ err.log
 
 # browser build output (make web)
 /web/pkg/
+tst/paml_compare/__pycache__/
