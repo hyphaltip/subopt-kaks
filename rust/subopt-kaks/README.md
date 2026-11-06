@@ -51,6 +51,33 @@ cargo build --release
 install -m 755 target/release/kaks /path/to/bin/
 ```
 
+## WebAssembly
+
+Two builds, no code changes needed for either:
+
+* **WASI command line** (`make wasi`): `target/wasm32-wasip1/release/kaks.wasm`
+  is the full CLI for any WASI runtime (`wasmtime --dir . kaks.wasm -- --prealigned x.aln`,
+  wasmer, or Node's `node:wasi`). Output is byte-identical to the native binary.
+* **Browser** (`make web`): builds the library with `--features wasm` for
+  `wasm32-unknown-unknown` and runs `wasm-bindgen` to produce `../../web/pkg/`.
+  `../../web/index.html` is a self-contained page (paste or load sequences, pick
+  method, genetic code and codon frequencies, run, download TSV/JSON). Serve
+  the `web/` directory over HTTP, for example `make -C ../.. serve-web`, then
+  open http://localhost:8000. Nothing is uploaded; all computation is local.
+  `.github/workflows/pages.yml` publishes it with GitHub Pages once Pages is
+  set to "GitHub Actions" in the repository settings.
+
+`make web` needs `wasm-bindgen-cli` at the same version as the `wasm-bindgen`
+crate in `Cargo.lock` (`cargo install wasm-bindgen-cli --version 0.2.130`).
+The browser build was checked under Node against the native binary on the
+bundled pair: lnL, t, kappa, omega, dN and dS are identical; N, S and SE(dS)
+differ in the sixth decimal because the wasm math library rounds `exp`/`log`
+slightly differently.
+
+The library crate (`subopt_kaks`) can also be used directly from Rust:
+`subopt_kaks::analyze(text, &Options)` returns one `PairResult` per pair and
+`subopt_kaks::report::to_string` renders them.
+
 ## Usage
 
 ```

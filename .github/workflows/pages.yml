@@ -1,0 +1,40 @@
+# Build the kaks browser page and publish it with GitHub Pages.
+# Enable once in the repository settings: Pages -> Source: GitHub Actions.
+name: pages
+on:
+  push:
+    branches: [master]
+    paths: ["rust/**", "web/**", ".github/workflows/pages.yml"]
+  workflow_dispatch:
+permissions:
+  contents: read
+  pages: write
+  id-token: write
+concurrency:
+  group: pages
+  cancel-in-progress: true
+jobs:
+  build:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - uses: dtolnay/rust-toolchain@stable
+        with:
+          targets: wasm32-unknown-unknown
+      - name: install wasm-bindgen-cli (same version as Cargo.lock)
+        run: |
+          v=$(grep -A1 'name = "wasm-bindgen"' rust/subopt-kaks/Cargo.lock | grep version | sed 's/.*"\(.*\)".*/\1/')
+          cargo install wasm-bindgen-cli --version "$v"
+      - run: make -C rust/subopt-kaks web
+      - uses: actions/upload-pages-artifact@v3
+        with:
+          path: web
+  deploy:
+    needs: build
+    runs-on: ubuntu-latest
+    environment:
+      name: github-pages
+      url: ${{ steps.deployment.outputs.page_url }}
+    steps:
+      - id: deployment
+        uses: actions/deploy-pages@v4

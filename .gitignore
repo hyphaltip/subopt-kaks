@@ -37,3 +37,6 @@
 # Runtime output
 summary.dat
 err.log
+
+# browser build output (make web)
+/web/pkg/

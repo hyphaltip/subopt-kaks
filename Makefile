@@ -7,6 +7,8 @@
 #   make install PREFIX=/usr/local
 #   make rust           build the Rust port (rust/subopt-kaks, binary `kaks`)
 #   make install-rust   copy the built kaks binary into $(PREFIX)/bin
+#   make web            build the browser version into web/pkg
+#   make serve-web      serve web/ on http://localhost:8000
 #   make clean          remove build products (keeps squid's configure output)
 #   make distclean      also remove squid's generated Makefile/config
 #
@@ -21,7 +23,7 @@ CC     ?= gcc
 export CC PREFIX
 
 .PHONY: all squid tools test install uninstall rust test-rust install-rust \
-        uninstall-rust clean distclean
+        uninstall-rust web serve-web clean distclean
 
 all: tools
 
@@ -60,6 +62,12 @@ install-rust:
 
 uninstall-rust:
 	$(MAKE) -C $(RUST) uninstall PREFIX=$(PREFIX)
+
+web:
+	$(MAKE) -C $(RUST) web
+
+serve-web: web
+	cd web && python3 -m http.server 8000
 
 # --- cleanup -------------------------------------------------------------
 clean:

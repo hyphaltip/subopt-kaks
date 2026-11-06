@@ -97,6 +97,11 @@ make uninstall-rust
 Or from `rust/subopt-kaks/`: `make`, `make test`, `make install [PREFIX=|BINDIR=]`.
 Only the one binary is installed; it needs no data files or environment variables.
 
+WebAssembly: `make -C rust/subopt-kaks wasi` builds the same CLI for any WASI
+runtime, and `make web` + `make serve-web` build and serve a browser page
+(`web/index.html`) that runs every estimator locally. See
+`rust/subopt-kaks/README.md`.
+
 ### Usage
 
 ```sh

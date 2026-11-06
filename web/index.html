@@ -1,0 +1,227 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>kaks dN/dS</title>
+<meta name="description" content="Estimate dN/dS (Ka/Ks) for coding sequences in the browser: Yang-Nielsen 2000, Nei-Gojobori 1986 and codeml-style pairwise maximum likelihood, all 27 NCBI genetic codes. Nothing leaves your computer.">
+<style>
+  :root {
+    --bg: #ffffff; --fg: #1a1a1a; --muted: #5c6370; --line: #d8dde3;
+    --panel: #f6f8fa; --accent: #1d4ed8; --accent-fg: #ffffff; --err: #b91c1c;
+    --mono: ui-monospace, SFMono-Regular, Menlo, Consolas, monospace;
+  }
+  @media (prefers-color-scheme: dark) {
+    :root:not([data-theme="light"]) {
+      --bg: #0f1419; --fg: #e6e9ee; --muted: #9aa4b2; --line: #2a323c;
+      --panel: #161c24; --accent: #60a5fa; --accent-fg: #0b1220; --err: #f87171;
+    }
+  }
+  :root[data-theme="dark"] {
+    --bg: #0f1419; --fg: #e6e9ee; --muted: #9aa4b2; --line: #2a323c;
+    --panel: #161c24; --accent: #60a5fa; --accent-fg: #0b1220; --err: #f87171;
+  }
+  * { box-sizing: border-box; }
+  body { margin: 0; background: var(--bg); color: var(--fg); font: 15px/1.5 system-ui, sans-serif; }
+  main { max-width: 1100px; margin: 0 auto; padding: 24px 16px 48px; }
+  h1 { font-size: 1.5rem; margin: 0 0 4px; }
+  .sub { color: var(--muted); margin: 0 0 20px; }
+  .grid { display: grid; grid-template-columns: 1fr; gap: 16px; }
+  @media (min-width: 860px) { .grid { grid-template-columns: 3fr 2fr; } }
+  textarea { width: 100%; min-height: 240px; font: 13px/1.4 var(--mono); padding: 8px;
+             border: 1px solid var(--line); border-radius: 6px; background: var(--panel); color: var(--fg); }
+  fieldset { border: 1px solid var(--line); border-radius: 6px; padding: 10px 12px; margin: 0 0 12px; background: var(--panel); }
+  legend { font-weight: 600; padding: 0 4px; }
+  label { display: flex; align-items: center; justify-content: space-between; gap: 8px; margin: 6px 0; }
+  label span { color: var(--fg); }
+  select, input[type=number], input[type=file] { font: inherit; padding: 4px 6px; border: 1px solid var(--line);
+             border-radius: 4px; background: var(--bg); color: var(--fg); max-width: 60%; }
+  input[type=number] { width: 90px; }
+  .row { display: flex; flex-wrap: wrap; gap: 8px; align-items: center; margin: 12px 0; }
+  button { font: inherit; padding: 8px 14px; border-radius: 6px; border: 1px solid var(--line);
+           background: var(--panel); color: var(--fg); cursor: pointer; }
+  button.primary { background: var(--accent); color: var(--accent-fg); border-color: var(--accent); font-weight: 600; }
+  button:disabled { opacity: .5; cursor: default; }
+  .status { color: var(--muted); font-size: .9rem; }
+  .error { color: var(--err); white-space: pre-wrap; font-family: var(--mono); font-size: .9rem; }
+  .tablewrap { overflow-x: auto; border: 1px solid var(--line); border-radius: 6px; }
+  table { border-collapse: collapse; width: 100%; font-size: .9rem; }
+  th, td { padding: 6px 10px; border-bottom: 1px solid var(--line); text-align: right; white-space: nowrap; font-family: var(--mono); }
+  th { position: sticky; top: 0; background: var(--panel); }
+  td:first-child, td:nth-child(2), th:first-child, th:nth-child(2) { text-align: left; }
+  pre { background: var(--panel); border: 1px solid var(--line); border-radius: 6px; padding: 10px; overflow-x: auto; font-size: .85rem; }
+  details { margin-top: 20px; color: var(--muted); }
+  summary { cursor: pointer; color: var(--fg); }
+  a { color: var(--accent); }
+</style>
+</head>
+<body>
+<main>
+  <h1>kaks: dN/dS in the browser</h1>
+  <p class="sub">Paste coding sequences, choose a method, run. Everything runs locally in WebAssembly; no sequence is uploaded.</p>
+
+  <div class="grid">
+    <section>
+      <label style="justify-content:flex-start"><span>Sequences (FASTA or PHYLIP)</span>
+        <input type="file" id="file" accept=".fa,.fasta,.fas,.fna,.aln,.phy,.txt"></label>
+      <textarea id="input" spellcheck="false" placeholder=">seq1
+ATG...
+>seq2
+ATG..."></textarea>
+      <div class="row">
+        <button class="primary" id="run" disabled>Run</button>
+        <button id="example">Load example pair</button>
+        <button id="dl-tsv" disabled>Download TSV</button>
+        <button id="dl-json" disabled>Download JSON</button>
+        <span class="status" id="status">loading WebAssembly module…</span>
+      </div>
+      <div class="error" id="error"></div>
+      <div class="tablewrap" id="tablewrap" hidden><table id="table"></table></div>
+    </section>
+
+    <aside>
+      <fieldset>
+        <legend>Input</legend>
+        <label><span>Already an in-frame codon alignment</span><input type="checkbox" id="prealigned"></label>
+        <label><span>Genetic code (NCBI id)</span><select id="code"></select></label>
+      </fieldset>
+      <fieldset>
+        <legend>Estimators</legend>
+        <label><span>Method</span>
+          <select id="method">
+            <option value="yn00">YN00 (Yang &amp; Nielsen 2000)</option>
+            <option value="ng86">NG86 (Nei &amp; Gojobori 1986)</option>
+            <option value="both">YN00 + NG86</option>
+            <option value="ml">ML (Goldman &amp; Yang 1994, codeml pairwise)</option>
+            <option value="all" selected>YN00 + NG86 + ML</option>
+          </select></label>
+        <label><span>ML codon frequencies</span>
+          <select id="cf">
+            <option value="fequal">Fequal</option>
+            <option value="f1x4">F1x4</option>
+            <option value="f3x4" selected>F3x4</option>
+            <option value="fcodon">Fcodon</option>
+          </select></label>
+        <label><span>YN00: pool F3x4 over all sequences</span><input type="checkbox" id="common"></label>
+      </fieldset>
+      <fieldset>
+        <legend>Protein alignment (unaligned input only)</legend>
+        <label><span>Mode</span>
+          <select id="aln"><option value="global" selected>global</option><option value="local">local</option></select></label>
+        <label><span>Gap open</span><input type="number" id="gapopen" value="11" min="0"></label>
+        <label><span>Gap extend</span><input type="number" id="gapext" value="1" min="0"></label>
+        <label style="flex-direction:column;align-items:stretch"><span>Scoring matrix (blank = BLOSUM62)</span>
+          <textarea id="matrix" style="min-height:70px" placeholder="paste a PAML/BLAST-style matrix, or leave blank"></textarea></label>
+      </fieldset>
+    </aside>
+  </div>
+
+  <details>
+    <summary>About the numbers</summary>
+    <p>YN00 and NG86 reproduce PAML <code>yn00</code> (<code>weighting = 0</code>). ML reproduces PAML <code>codeml</code> with
+    <code>runmode = -2</code>, <code>model = 0</code>: t, kappa and omega by maximum likelihood with standard errors from the
+    curvature of the likelihood. Validated pair by pair against PAML 4.10 on PAML's example data under eleven genetic codes.
+    With more than two sequences every pair is estimated independently; there is no tree-based estimate.
+    Source and command-line tool: <a href="https://github.com/hyphaltip/subopt-kaks">github.com/hyphaltip/subopt-kaks</a>.</p>
+    <p id="version"></p>
+  </details>
+</main>
+
+<script type="module">
+  import init, { kaks_run, kaks_codes, kaks_version } from "./pkg/subopt_kaks.js";
+
+  const $ = (id) => document.getElementById(id);
+  const status = $("status"), errBox = $("error"), runBtn = $("run");
+  let lastTsv = "", lastJson = "";
+
+  const EXAMPLE = `>F35G8.1
+ATGGGACTCCAAGGGCGTGCAATTAGAATCCCATTACTCAATGCTTTCTATCACTTCTGGAGTGTCGGAATGAATATCGACTCGAATTTAACAGATTTTCAATGCGAGTACCCGGCGATTGACATAGGAATTCATATGAAAACCTTGTTAGCAGTCGGGTATGGTTTGGTGGGAGCCCTGAGCTTAGTTGGAAATCTTGCTGTATTGCTCATTGTGATATGCAGGAGAGAAATGCAAACAGTCACCAACATTTTTATAAGTAGCGTCTCCGCGGCTGACTTGGTAATAACAAGTTTCTCCTTATGGGCGACCCCATTAGCCTATTATCAACGGGTATGGCATTTCGGAAAGTATATGTGCTATATGGTTTCCATCATACAAGGCTTATCCCTCATGTGGGTACCACTGACCCTAGCAGCAGTTGCATTAGATCGCTACTCTCTAGTTGCTTCTCCGTTCCGTCAGCCAATGTCTAAAAAGACTTGCTTGCTGATCATCGCTGGAATCTGGATGGGAGGGTTTGCAGTTTTGTCGCCAATGATTCGGATGGTAGATTTTGTTGACAGCTATGGACCATGCCATTTTTGCCTGGAATCCTGGGACCACGACAAACAACACTACCGACTTTTCTACGGACTCTCGGTGCTCGTGATCCGCTCCGCAATTCCACTTGTTCTCATTTCCCTGTGCCACTGGAGAATCGCAGTTATTTTGAACACGCAGACGAAGAAATTCCAAACATTACGTAGTGCCAGCACAGTCACCCAATCGACTGACATCCGCCGTAAACAACGTCTTCAGACTCTCTTATTGGCAATGGTGGTCATATTTGCCGTGTCCAGTCTCCCACTGGACCTTTCAAATGTTCTTCAAGATTTGATCGTAGTGTACCAGGTTCGACCTGTCCCCGACAACGTTCGCCATTTTATCTTCTTCTTTTGCCATTGGACCGCAATGGCAGGAACACTTCTCAACCCGTTAGTCTACGCGTACTACAACGAAAACTTCCGGCGTCAGATTCAAACATGCTTTGGAGAAATGCGTGGACAGGGAGAGTTCAAGCGGGGGCTATACTCTATTGTCTCCGGCAGATACTCCTACCGAGCAGACGACGAGGAAAATCATCACAGACAAAACACACGTATCGAACTGGCTAACAATCAAACTGGTGATATCGAAGTTCTCAGAACGGATCTT
+>CBG16160
+ATGAACGCCGACGCAAACCTGACGGATTTTCAGTGCGAGTATCCATCGATTGATCTCACTTTTCAAATTAAGCTTTTACTTGCATTCGCTTATGGATCGGTTGGAGCTCTTAGCTTGGTTGGAAATCTAGCTGTATTGCTCATCGTTGTCTGCCGACGAGAGATGCAAACCGTAACCAATATCTTCATCAGCAGTGTCTCTGCAGCAGACTTGGTCATCACTAGTTTCTCACTATGGGCCACGCCAATGGCTTACTATCAACGTGTATGGTACTTTGGAAAGTACATGTGCTATATGGTATCTATTATCCAAGGTCTATCCCTTATGTGGGTCCCATTGACCCTTGCAGCTGTTGCATTGGATCGCTACTGTTTAGTAGCATCTCCGTTCCGGCAGCCAATGTCTAAAAAGACATGTCTACTGATAATTGCTGGAATCTGGCTGGGCGGTTTTGCCGTTCTCTCTCCAATGATCAGAATGGTGGATTTTGTTGACAGCTATGGACCATGCCATTTCTGCTTGGAATCTTGGGACCATGACAAACAACACTACCGCCTATTCTACGGATTATCAGTGCTTGTCATCCGCTCCGCCATTCCACTAATTTTAATCTCAATTTGCCATTGGAGAATCGCCCACATTCTGAACACCCAGACAAAGAAATTTCAAACGCTTCGTAGTGCCAGCACGGCAACTCAATCAACCGACATCCGCCGTAAGCAACGTCTGCAGACCCTCCTCCTCGCCATGGTTGTCATTTTCGCCGTGTCCAGTCTCCCATTAGACCTTTCAAATGTTTTGCAAGACTTGATCTTCGTGTATCAGGTCCGACCGGTTCCGGACAACGTGCGCCACTTTATCTTCTTCTTCTGTCACTGGCTCGCCATGGCTGGAACTTTGCTCAACCCACTGGTCTACGCATACTATAATGAAAATTTTAGGCGCCAATTCCAATCTTTCCACACGTGTTTCGGCGGTATCAGAGGACAAGGAGAATTCAAACGAGGGCTCTATTCGATTGTGTCCGGGAGATATTCATACAGAGCAGACGACGAAGCCAACCATACCAACCAACCAGATTGTCAAAGACAACAAACAACTCGGATTGAGTTGGCCAATAATGCTGAAATCGAAGTTCTTCGCACTGATCTC
+`;
+
+  function setError(msg) { errBox.textContent = msg || ""; }
+
+  function renderTable(tsv) {
+    const rows = tsv.trim().split("\n").map((l) => l.split("\t"));
+    const table = $("table");
+    table.innerHTML = "";
+    const thead = table.createTHead().insertRow();
+    rows[0].forEach((h) => { const th = document.createElement("th"); th.textContent = h; thead.appendChild(th); });
+    const tbody = table.createTBody();
+    rows.slice(1).forEach((r) => { const tr = tbody.insertRow(); r.forEach((c) => { tr.insertCell().textContent = c; }); });
+    $("tablewrap").hidden = false;
+  }
+
+  function download(name, text, type) {
+    const a = document.createElement("a");
+    a.href = URL.createObjectURL(new Blob([text], { type }));
+    a.download = name;
+    a.click();
+    setTimeout(() => URL.revokeObjectURL(a.href), 1000);
+  }
+
+  function opts(format) {
+    return [
+      $("input").value, $("prealigned").checked, $("method").value, $("cf").value,
+      Number($("code").value), $("aln").value, Number($("gapopen").value), Number($("gapext").value),
+      $("common").checked, format, $("matrix").value,
+    ];
+  }
+
+  function run() {
+    setError("");
+    $("tablewrap").hidden = true;
+    $("dl-tsv").disabled = $("dl-json").disabled = true;
+    if (!$("input").value.trim()) { setError("Paste or load sequences first."); return; }
+    status.textContent = "running…";
+    runBtn.disabled = true;
+    // let the status repaint before the synchronous call
+    setTimeout(() => {
+      const t0 = performance.now();
+      try {
+        lastTsv = kaks_run(...opts("tsv"));
+        lastJson = kaks_run(...opts("json"));
+        renderTable(lastTsv);
+        const n = lastTsv.trim().split("\n").length - 1;
+        status.textContent = `${n} pair${n === 1 ? "" : "s"} in ${((performance.now() - t0) / 1000).toFixed(2)} s`;
+        $("dl-tsv").disabled = $("dl-json").disabled = false;
+      } catch (e) {
+        status.textContent = "";
+        setError(String(e && e.message ? e.message : e));
+      } finally {
+        runBtn.disabled = false;
+      }
+    }, 0);
+  }
+
+  $("file").addEventListener("change", async (ev) => {
+    const f = ev.target.files[0];
+    if (f) { $("input").value = await f.text(); }
+  });
+  $("example").addEventListener("click", () => { $("input").value = EXAMPLE; $("prealigned").checked = false; });
+  $("run").addEventListener("click", run);
+  $("dl-tsv").addEventListener("click", () => download("kaks.tsv", lastTsv, "text/tab-separated-values"));
+  $("dl-json").addEventListener("click", () => download("kaks.json", lastJson, "application/json"));
+  $("input").addEventListener("keydown", (e) => { if ((e.ctrlKey || e.metaKey) && e.key === "Enter") run(); });
+
+  try {
+    await init();
+    const sel = $("code");
+    kaks_codes().trim().split("\n").forEach((line) => {
+      const [id, name] = line.split("\t");
+      const o = document.createElement("option");
+      o.value = id.trim(); o.textContent = `${id.trim()}: ${name}`;
+      sel.appendChild(o);
+    });
+    sel.value = "1";
+    $("version").textContent = `kaks ${kaks_version()} (WebAssembly)`;
+    status.textContent = "ready";
+    runBtn.disabled = false;
+  } catch (e) {
+    status.textContent = "";
+    setError("Could not load the WebAssembly module. Serve this directory over HTTP (for example `make serve-web`).\n" + e);
+  }
+</script>
+</body>
+</html>
