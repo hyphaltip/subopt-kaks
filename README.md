@@ -73,7 +73,7 @@ time. The bundled matrices are in `matricies/aa` and `matricies/nt`.
 `rust/subopt-kaks` is a single-binary reimplementation of `yn00_cds_optimal`
 and `yn00_cds_prealigned`: flags only, embedded BLOSUM62 and genetic-code
 tables, FASTA/PHYLIP input from a file or stdin, TSV/table/JSON output, YN00
-and NG86 estimators, six genetic codes. Its `--prealigned` path reproduces
+and NG86 estimators, all 27 NCBI genetic codes. Its `--prealigned` path reproduces
 `yn00_cds_prealigned` byte-for-byte on the bundled test pair. The Zuker
 suboptimal-alignment tools exist only in C.
 
@@ -101,7 +101,8 @@ kaks --prealigned input.cds.aln             # in-frame codon alignment
 kaks --method both --format table in.fasta  # YN00 + NG86, readable columns
 cat in.fasta | kaks --format json -         # JSON from stdin
 kaks --aln-mode local --matrix BLOSUM45 --gap-open 10 --gap-ext 2 in.fasta
-kaks --genetic-code 1 in.fasta              # vertebrate mitochondrial
+kaks --genetic-code 2 in.fasta              # NCBI transl_table 2, vertebrate mito
+kaks --list-codes                           # all 27 supported genetic codes
 ```
 
 Every pair of sequences in the input is reported. Output columns are

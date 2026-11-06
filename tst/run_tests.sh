@@ -56,6 +56,8 @@ if [ "$mode" = c ]; then
 else
     check kaks_prealigned "$BIN/kaks" --prealigned F35G8.1_CBG16160.cds.aln
     check kaks_cds        "$BIN/kaks" F35G8.1_CBG16160.cds.fas
+    check kaks_code5      "$BIN/kaks" --genetic-code 5 F35G8.1_CBG16160.cds.fas
+    check kaks_list_codes "$BIN/kaks" --list-codes
 fi
 
 echo "$pass passed, $fail failed"

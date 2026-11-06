@@ -57,7 +57,8 @@ enum AlnMode {
 )]
 struct Cli {
     /// Input sequence file (`-` for stdin)
-    input: String,
+    #[arg(required_unless_present = "list_codes")]
+    input: Option<String>,
 
     /// Treat input as an in-frame codon alignment (skip the alignment step)
     #[arg(long)]
@@ -75,9 +76,15 @@ struct Cli {
     #[arg(long, value_enum, default_value_t = Method::Yn00)]
     method: Method,
 
-    /// NCBI genetic code index (0=universal, 1=vert-mito, 2=yeast-mito, 3=mold-mito, 4=invert-mito, 5=ciliate)
-    #[arg(long, default_value_t = 0)]
-    genetic_code: usize,
+    /// NCBI translation-table id (1=standard, 2=vertebrate mito, 3=yeast mito,
+    /// 4=mold/protozoan mito, 5=invertebrate mito, 6=ciliate nuclear, 9..33);
+    /// see --list-codes
+    #[arg(long, default_value_t = 1, value_name = "ID")]
+    genetic_code: u8,
+
+    /// Print all supported genetic codes (id and name) and exit
+    #[arg(long)]
+    list_codes: bool,
 
     /// Alignment mode when starting from unaligned CDS
     #[arg(long, value_enum, default_value_t = AlnMode::Global)]
@@ -112,33 +119,46 @@ struct Cli {
 
 fn main() {
     let cli = Cli::parse();
-    if cli.genetic_code >= genetic_code::NUM_CODES {
-        eprintln!(
-            "error: genetic-code must be 0..{}",
-            genetic_code::NUM_CODES - 1
-        );
-        std::process::exit(2);
+    if cli.list_codes {
+        print!("{}", genetic_code::list());
+        return;
     }
-    if let Err(e) = run(&cli) {
+    let code = match genetic_code::index_of(cli.genetic_code) {
+        Some(i) => i,
+        None => {
+            eprintln!(
+                "error: unknown genetic code {}; NCBI ids are: {}",
+                cli.genetic_code,
+                genetic_code::CODES
+                    .iter()
+                    .map(|c| c.id.to_string())
+                    .collect::<Vec<_>>()
+                    .join(",")
+            );
+            std::process::exit(2);
+        }
+    };
+    if let Err(e) = run(&cli, code) {
         eprintln!("error: {e}");
         std::process::exit(1);
     }
 }
 
-fn run(cli: &Cli) -> Result<(), Box<dyn std::error::Error>> {
+fn run(cli: &Cli, code: usize) -> Result<(), Box<dyn std::error::Error>> {
     let fmt = cli.informat.map(|f| match f {
         InFormat::Fasta => seq::Format::Fasta,
         InFormat::Phylip => seq::Format::Phylip,
     });
-    let records = seq::read_path(&cli.input, fmt)?;
+    let input = cli.input.as_deref().ok_or("missing INPUT")?;
+    let records = seq::read_path(input, fmt)?;
 
     let results: Vec<PairResult> = if cli.prealigned {
         let names: Vec<String> = records.iter().map(|r| r.name.clone()).collect();
         let seqs: Vec<Vec<u8>> = records.iter().map(|r| r.seq.clone().into_bytes()).collect();
-        let data = estimate::clean_and_encode(names, &seqs, cli.genetic_code)?;
+        let data = estimate::clean_and_encode(names, &seqs, code)?;
         estimate::run(&data)
     } else {
-        align_and_estimate(cli, &records)?
+        align_and_estimate(cli, &records, code)?
     };
 
     let out: Box<dyn Write> = match &cli.output {
@@ -153,6 +173,7 @@ fn run(cli: &Cli) -> Result<(), Box<dyn std::error::Error>> {
 fn align_and_estimate(
     cli: &Cli,
     records: &[seq::Record],
+    code: usize,
 ) -> Result<Vec<PairResult>, Box<dyn std::error::Error>> {
     let mode = match cli.aln_mode {
         AlnMode::Global => align::Mode::Global,
@@ -167,7 +188,7 @@ fn align_and_estimate(
                 &records[i].seq,
                 &records[j].name,
                 &records[j].seq,
-                cli.genetic_code,
+                code,
                 &mat,
                 mode,
                 cli.gap_open,
@@ -175,7 +196,7 @@ fn align_and_estimate(
             )?;
             let names = vec![ca.names[0].clone(), ca.names[1].clone()];
             let seqs = vec![ca.aln[0].clone().into_bytes(), ca.aln[1].clone().into_bytes()];
-            let data = estimate::clean_and_encode(names, &seqs, cli.genetic_code)?;
+            let data = estimate::clean_and_encode(names, &seqs, code)?;
             results.extend(estimate::run(&data));
         }
     }

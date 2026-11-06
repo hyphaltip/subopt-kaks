@@ -6,8 +6,9 @@ sequences. It reimplements the numerical core of the `yn00_cds_optimal` and
 and a choice of output formats.
 
 * takes **all** configuration from command-line flags
-* embeds BLOSUM62 and the genetic-code tables, so nothing else needs installing
-  (other matrices can still be loaded from a file or a matrix directory)
+* embeds BLOSUM62 and all 27 NCBI genetic codes (`gc.prt` 4.6), so nothing
+  else needs installing (other matrices can still be loaded from a file or a
+  matrix directory)
 * reads FASTA or PHYLIP, from a file or stdin
 * writes TSV, an aligned table, or JSON
 * no runtime dependencies (only `clap` at build time)
@@ -60,8 +61,11 @@ cat input.cds.fasta | kaks --format json -o result.json -
 # Local protein alignment with a different matrix and gap penalties
 kaks --aln-mode local --matrix BLOSUM45 --gap-open 10 --gap-ext 2 input.cds.fasta
 
-# Vertebrate mitochondrial code
-kaks --genetic-code 1 input.cds.fasta
+# Vertebrate mitochondrial code (NCBI transl_table 2)
+kaks --genetic-code 2 input.cds.fasta
+
+# All supported genetic codes
+kaks --list-codes
 ```
 
 ### Options
@@ -72,7 +76,8 @@ kaks --genetic-code 1 input.cds.fasta
 | `--informat {fasta,phylip}` | auto | Input format (auto-detected otherwise) |
 | `--format {tsv,table,json}` | `tsv` | Output format |
 | `--method {yn00,ng86,both}` | `yn00` | Estimator(s) to report |
-| `--genetic-code N` | `0` | NCBI code: 0=universal, 1=vert-mito, 2=yeast-mito, 3=mold-mito, 4=invert-mito, 5=ciliate |
+| `--genetic-code ID` | `1` | NCBI translation table id (`transl_table`): any of the 27 NCBI tables, e.g. 1 standard, 2 vertebrate mito, 3 yeast mito, 4 mold/protozoan mito, 5 invertebrate mito, 6 ciliate, 11 bacterial/plastid |
+| `--list-codes` | | Print all supported genetic codes (id and name) and exit |
 | `--aln-mode {global,local}` | `global` | Protein aligner mode for the from-CDS path |
 | `--matrix NAME\|FILE` | built-in BLOSUM62 | Scoring matrix: a path, or a bare name (e.g. `PAM250`) |
 | `--matrix-dir DIR` | | Directory searched for bare matrix names (else `$SUBOPT_MATRIX_DIR`, `$SUBOPTDIR/matricies/aa`, `./matricies/aa`) |
@@ -99,6 +104,15 @@ Example (bundled test pair):
 SEQ1     SEQ2      dN        dS        OMEGA     N           S           kappa     t         LENGTH
 F35G8.1  CBG16160  0.066778  1.472123  0.045362  832.180782  289.819218  1.564887  1.289361  1227
 ```
+
+### Genetic codes
+
+`--genetic-code` takes the NCBI translation-table id used in GenBank
+`transl_table` qualifiers. All 27 tables in NCBI `gc.prt` version 4.6 are
+embedded (1-6, 9-16, 21-33); `kaks --list-codes` prints them. The default is 1
+(standard). Note for users of the C tools or PAML: PAML numbers its six codes
+0-5, and its yeast-mitochondrial table keeps TGA as a stop, whereas NCBI
+table 3 translates TGA as Trp. `kaks` follows NCBI.
 
 ## Validation
 

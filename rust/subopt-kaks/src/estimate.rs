@@ -19,6 +19,7 @@ pub struct CodonData {
     pub alen: usize,
     /// `z[i][h]` is the codon index (0..=63) of codon `h` in sequence `i`.
     pub z: Vec<Vec<u8>>,
+    /// Index into `genetic_code::CODES` (not the NCBI id).
     pub code: usize,
 }
 
@@ -263,7 +264,7 @@ fn get_kappa(data: &CodonData, kappa_init: f64) -> f64 {
     let table = &GENETIC_CODES[data.code];
     let kdefault = if kappa_init > 0.0 {
         kappa_init
-    } else if data.code == 1 {
+    } else if crate::genetic_code::ncbi_id(data.code) == 2 {
         10.0
     } else {
         2.0
