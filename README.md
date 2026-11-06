@@ -3,12 +3,6 @@
 Suboptimal alignments and Ka/Ks (dN/dS) calculations for pairs of coding
 sequences.
 
-This source is freely available, but should be considered a personal
-communication: it has not been properly packaged and does not yet give
-adequate credit to the code it reuses. Please contact me if you have
-questions or intend to use this for large-scale analyses so I can be sure
-it is performing properly for you.
-
 * **SQUID** is Sean Eddy's sequence library (bundled in `squid/`).
 * The alignment code is based on design ideas from Michael Smoot.
 * dN/dS estimation reuses Z. Yang's `yn00` implementation from PAML, with
@@ -164,8 +158,16 @@ values for the bundled pair (universal code, YN00):
 dN=0.066778  dS=1.472123  omega=0.045362  N=832.180782  S=289.819218  kappa=1.564887  t=1.289361
 ```
 
+## Notes
+
+This source is freely available, but should be considered a personal
+communication: it has not been properly packaged and does not yet give
+adequate credit to the code it reuses. Please contact me if you have
+questions or intend to use this for large-scale analyses so I can be sure
+it is performing properly for you.
+
 ## Changes
 
 See `Changelog`.
 
-Jason Stajich
+Jason Stajich @hyphaltip
