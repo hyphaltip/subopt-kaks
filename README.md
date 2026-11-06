@@ -115,6 +115,39 @@ Every pair of sequences in the input is reported. Output columns are
 NG_omega` with `--method both`). `kaks --help` lists all options; see
 `rust/subopt-kaks/README.md` for details.
 
+### Validation against PAML (2026-11-05)
+
+`tst/paml_compare/compare_paml.py` ran PAML 4.10.10 `codeml` (pairwise,
+`runmode = -2`, all four `CodonFreq` models) and `yn00` next to `kaks` on
+PAML's own example alignments: 2 to 25 sequences, 273 to 10,707 nt,
+interleaved and sequential files, identity dots and ambiguity codes, under 11
+genetic codes including vertebrate mitochondrial on mitochondrial data.
+
+| | |
+|---|---|
+| dataset x code combinations | 17 |
+| yn00 pairs compared | 794, 0 differences beyond printed precision |
+| codeml ML pair x CodonFreq comparisons | 3176, 3 differences |
+
+* lnL agrees to all six decimals codeml prints; t, kappa, omega, dN, dS, S
+  and N agree to codeml's five decimals on every pair except three.
+* Of those three, one is a codeml local optimum (its lnL is 1.04 units worse
+  than the `kaks` value; codeml starts from random values, `kaks` from the
+  NG86 distance). Two are saturated pairs with dS above 25 where the
+  likelihood is flat in t and the two programs differ by under 0.5 %.
+* Standard errors agree within 15 % on 95 % of pairs. Both programs use a
+  finite-difference Hessian; the `kaks` values are stable across step sizes,
+  codeml's change between runs. Treat S.E. values from either program as
+  approximate.
+* All 11 PAML genetic-code tables are identical to the NCBI tables `kaks`
+  embeds.
+
+Conclusion: for pairwise estimation `kaks --method ml` gives the same answer
+as `codeml`, and where they differ `kaks` has the higher likelihood. For more
+than two sequences both programs produce independent pairwise estimates; the
+tree-based joint estimate of `codeml` is not implemented. Full report and
+method: `tst/paml_compare/README.md`.
+
 ## Tests
 
 `tst/run_tests.sh` runs each tool on the bundled *C. elegans* / *C. briggsae*

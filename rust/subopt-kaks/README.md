@@ -141,11 +141,36 @@ translates TGA as Trp. `kaks` follows NCBI.
 
 ## Validation against PAML
 
-`../../tst/paml_compare/compare_paml.py` runs PAML `codeml` (pairwise, all
-four `CodonFreq` models, `getSE = 1`) and `yn00` next to `kaks` on PAML's own
-example alignments under eleven genetic codes and compares every pair. See
-`../../tst/paml_compare/README.md` for the datasets, tolerances and the
-current result.
+`../../tst/paml_compare/compare_paml.py` ran PAML 4.10.10 `codeml` (pairwise,
+`runmode = -2`, all four `CodonFreq` models) and `yn00` next to `kaks` on
+PAML's own example alignments: 2 to 25 sequences, 273 to 10,707 nt,
+interleaved and sequential files, identity dots and ambiguity codes, under 11
+genetic codes including vertebrate mitochondrial on mitochondrial data.
+
+| | |
+|---|---|
+| dataset x code combinations | 17 |
+| yn00 pairs compared | 794, 0 differences beyond printed precision |
+| codeml ML pair x CodonFreq comparisons | 3176, 3 differences |
+
+* lnL agrees to all six decimals codeml prints; t, kappa, omega, dN, dS, S
+  and N agree to codeml's five decimals on every pair except three.
+* Of those three, one is a codeml local optimum (its lnL is 1.04 units worse
+  than the `kaks` value; codeml starts from random values, `kaks` from the
+  NG86 distance). Two are saturated pairs with dS above 25 where the
+  likelihood is flat in t and the two programs differ by under 0.5 %.
+* Standard errors agree within 15 % on 95 % of pairs. Both programs use a
+  finite-difference Hessian; the `kaks` values are stable across step sizes,
+  codeml's change between runs. Treat S.E. values from either program as
+  approximate.
+* All 11 PAML genetic-code tables are identical to the NCBI tables `kaks`
+  embeds.
+
+Conclusion: for pairwise estimation `kaks --method ml` gives the same answer
+as `codeml`, and where they differ `kaks` has the higher likelihood. For more
+than two sequences both programs produce independent pairwise estimates; the
+tree-based joint estimate of `codeml` is not implemented. Full report and
+method: `../../tst/paml_compare/README.md`.
 
 The **prealigned** path reproduces the C `yn00_cds_prealigned` output
 byte-for-byte (dN, dS, ω, N, S, κ, t and alignment length) on the bundled
