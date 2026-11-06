@@ -1,6 +1,6 @@
 [package]
 name = "subopt-kaks"
-version = "0.2.0"
+version = "2.0.0"
 edition = "2021"
 authors = ["Jason Stajich <jasonst@ucr.edu>"]
 description = "Ka/Ks (dN/dS) estimation from coding-sequence alignments (Rust port of the subopt-kaks C tools, plus codeml-style pairwise ML)"

@@ -1,5 +1,30 @@
 Changes to suboptaln
 
+2.0.0 (2026-11-06)
+ Version numbering restarts at 2.0.0 for the whole package (C tools, the
+ Rust `kaks` tool and the web page share this number).
+
+ rust/subopt-kaks (kaks)
+  Pairwise maximum-likelihood dN/dS under the Goldman & Yang 1994 codon
+  model (--method ml, --codon-freq fequal|f1x4|f3x4|fcodon), a port of
+  PAML codeml runmode = -2, validated pair by pair against codeml and
+  yn00 on PAML's example data under 11 genetic codes
+  (tst/paml_compare/).
+  All 27 NCBI genetic codes, selected by transl_table id (--genetic-code,
+  --list-codes).
+  yn00 uses per-pair F3x4 frequencies like PAML yn00; --common-f3x4
+  restores the pooled frequencies of the C tools.
+  Library crate plus CLI; WebAssembly builds: WASI command line
+  (make wasi) and a browser page with batch upload (make web,
+  https://hyphaltip.github.io/subopt-kaks/).
+  Makefile install targets (make install PREFIX=|BINDIR=).
+
+ license
+  GNU GPL v3 or later throughout (LICENSE, Cargo.toml, READMEs).
+
+ man pages
+  Placeholders (@PACKAGE@, @RELEASE@, ...) filled in.
+
 0.07 (2026-11-05)
  build
   Top-level Makefile: `make` configures and builds squid then src;
