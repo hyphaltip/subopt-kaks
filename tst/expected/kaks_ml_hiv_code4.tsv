@@ -1,0 +1,3 @@
+[
+  {"seq1":"U68496","seq2":"U68497","length":273,"ML_dN":0.026014,"ML_dS":0.082247,"ML_omega":0.316290,"ML_N":230.859446,"ML_S":42.140554,"ML_kappa":3.954948,"ML_t":0.104082,"lnL":-378.391267,"ML_SE_dN":0.010768,"ML_SE_dS":0.048926,"ML_SE_t":0.035465,"ML_SE_kappa":2.873631,"ML_SE_omega":0.229432,"ML_converged":true,"ML_nfun":80}
+]

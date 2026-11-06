@@ -10,6 +10,8 @@ mod align;
 mod estimate;
 mod genetic_code;
 mod matrix;
+mod ml;
+mod optim;
 mod seq;
 
 use clap::{Parser, ValueEnum};
@@ -38,8 +40,36 @@ enum Method {
     Yn00,
     /// Nei & Gojobori 1986
     Ng86,
-    /// Both methods
+    /// Both counting methods (yn00 + ng86)
     Both,
+    /// Pairwise maximum likelihood under the Goldman & Yang 1994 codon model
+    /// (PAML codeml runmode = -2)
+    Ml,
+    /// yn00, ng86 and ml
+    All,
+}
+
+#[derive(Copy, Clone, PartialEq, Eq, ValueEnum, Debug)]
+enum CodonFreqArg {
+    /// Equal frequency for every sense codon (codeml CodonFreq = 0)
+    Fequal,
+    /// Product of overall base frequencies (CodonFreq = 1)
+    F1x4,
+    /// Product of position-specific base frequencies (CodonFreq = 2)
+    F3x4,
+    /// Observed codon frequencies (CodonFreq = 3)
+    Fcodon,
+}
+
+impl CodonFreqArg {
+    fn to_model(self) -> ml::CodonFreq {
+        match self {
+            CodonFreqArg::Fequal => ml::CodonFreq::Fequal,
+            CodonFreqArg::F1x4 => ml::CodonFreq::F1x4,
+            CodonFreqArg::F3x4 => ml::CodonFreq::F3x4,
+            CodonFreqArg::Fcodon => ml::CodonFreq::Fcodon,
+        }
+    }
 }
 
 #[derive(Copy, Clone, PartialEq, Eq, ValueEnum, Debug)]
@@ -75,6 +105,16 @@ struct Cli {
     /// Which estimator(s) to report
     #[arg(long, value_enum, default_value_t = Method::Yn00)]
     method: Method,
+
+    /// yn00: pool F3x4 codon frequencies over all sequences instead of each
+    /// pair (PAML yn00 commonf3x4 = 1; the C yn00_cds_* tools' behaviour).
+    /// No effect with two sequences.
+    #[arg(long)]
+    common_f3x4: bool,
+
+    /// Codon-frequency model for --method ml (codeml CodonFreq)
+    #[arg(long, value_enum, default_value_t = CodonFreqArg::F3x4)]
+    codon_freq: CodonFreqArg,
 
     /// NCBI translation-table id (1=standard, 2=vertebrate mito, 3=yeast mito,
     /// 4=mold/protozoan mito, 5=invertebrate mito, 6=ciliate nuclear, 9..33);
@@ -144,6 +184,13 @@ fn main() {
     }
 }
 
+fn ml_opt(cli: &Cli) -> Option<ml::CodonFreq> {
+    match cli.method {
+        Method::Ml | Method::All => Some(cli.codon_freq.to_model()),
+        _ => None,
+    }
+}
+
 fn run(cli: &Cli, code: usize) -> Result<(), Box<dyn std::error::Error>> {
     let fmt = cli.informat.map(|f| match f {
         InFormat::Fasta => seq::Format::Fasta,
@@ -156,7 +203,7 @@ fn run(cli: &Cli, code: usize) -> Result<(), Box<dyn std::error::Error>> {
         let names: Vec<String> = records.iter().map(|r| r.name.clone()).collect();
         let seqs: Vec<Vec<u8>> = records.iter().map(|r| r.seq.clone().into_bytes()).collect();
         let data = estimate::clean_and_encode(names, &seqs, code)?;
-        estimate::run(&data)
+        estimate::run(&data, ml_opt(cli), cli.common_f3x4)?
     } else {
         align_and_estimate(cli, &records, code)?
     };
@@ -197,7 +244,7 @@ fn align_and_estimate(
             let names = vec![ca.names[0].clone(), ca.names[1].clone()];
             let seqs = vec![ca.aln[0].clone().into_bytes(), ca.aln[1].clone().into_bytes()];
             let data = estimate::clean_and_encode(names, &seqs, code)?;
-            results.extend(estimate::run(&data));
+            results.extend(estimate::run(&data, ml_opt(cli), cli.common_f3x4)?);
         }
     }
     Ok(results)
@@ -215,14 +262,33 @@ fn write_results(
     }
 }
 
+const YN_COLS: [&str; 8] = ["dN", "dS", "OMEGA", "N", "S", "kappa", "t", "LENGTH"];
+const NG_COLS: [&str; 3] = ["NG_dN", "NG_dS", "NG_OMEGA"];
+const ML_COLS: [&str; 11] = [
+    "ML_dN", "ML_dS", "ML_OMEGA", "ML_N", "ML_S", "ML_kappa", "ML_t", "lnL", "SE_dN", "SE_dS",
+    "LENGTH",
+];
+
 fn columns(method: Method) -> Vec<&'static str> {
     let mut c = vec!["SEQ1", "SEQ2"];
     match method {
-        Method::Yn00 => c.extend(["dN", "dS", "OMEGA", "N", "S", "kappa", "t", "LENGTH"]),
-        Method::Ng86 => c.extend(["NG_dN", "NG_dS", "NG_OMEGA", "LENGTH"]),
-        Method::Both => c.extend([
-            "dN", "dS", "OMEGA", "N", "S", "kappa", "t", "NG_dN", "NG_dS", "NG_OMEGA", "LENGTH",
-        ]),
+        Method::Yn00 => c.extend(YN_COLS),
+        Method::Ng86 => {
+            c.extend(NG_COLS);
+            c.push("LENGTH");
+        }
+        Method::Both => {
+            c.extend(&YN_COLS[..7]);
+            c.extend(NG_COLS);
+            c.push("LENGTH");
+        }
+        // alone, the ML estimate uses the plain column names
+        Method::Ml => c.extend(ML_COLS.iter().map(|s| s.strip_prefix("ML_").unwrap_or(s))),
+        Method::All => {
+            c.extend(&YN_COLS[..7]);
+            c.extend(NG_COLS);
+            c.extend(ML_COLS);
+        }
     }
     c
 }
@@ -230,37 +296,48 @@ fn columns(method: Method) -> Vec<&'static str> {
 fn row_values(r: &PairResult, method: Method) -> Vec<String> {
     let mut v = vec![r.seq1.clone(), r.seq2.clone()];
     let f = |x: f64| format!("{x:.6}");
+    let yn = |v: &mut Vec<String>| {
+        v.extend([
+            f(r.dn),
+            f(r.ds),
+            f(r.omega),
+            f(r.n_sites),
+            f(r.s_sites),
+            f(r.kappa),
+            f(r.t),
+        ])
+    };
+    let ng = |v: &mut Vec<String>| v.extend([f(r.ng_dn), f(r.ng_ds), f(r.ng_omega)]);
+    let mlv = |v: &mut Vec<String>| match &r.ml {
+        Some(m) => v.extend([
+            f(m.dn),
+            f(m.ds),
+            f(m.omega),
+            f(m.n_sites),
+            f(m.s_sites),
+            f(m.kappa),
+            f(m.t),
+            f(m.lnl),
+            f(m.se_dn),
+            f(m.se_ds),
+        ]),
+        None => v.extend(std::iter::repeat_n("NA".to_string(), 10)),
+    };
     match method {
-        Method::Yn00 => v.extend([
-            f(r.dn),
-            f(r.ds),
-            f(r.omega),
-            f(r.n_sites),
-            f(r.s_sites),
-            f(r.kappa),
-            f(r.t),
-            r.length.to_string(),
-        ]),
-        Method::Ng86 => v.extend([
-            f(r.ng_dn),
-            f(r.ng_ds),
-            f(r.ng_omega),
-            r.length.to_string(),
-        ]),
-        Method::Both => v.extend([
-            f(r.dn),
-            f(r.ds),
-            f(r.omega),
-            f(r.n_sites),
-            f(r.s_sites),
-            f(r.kappa),
-            f(r.t),
-            f(r.ng_dn),
-            f(r.ng_ds),
-            f(r.ng_omega),
-            r.length.to_string(),
-        ]),
+        Method::Yn00 => yn(&mut v),
+        Method::Ng86 => ng(&mut v),
+        Method::Both => {
+            yn(&mut v);
+            ng(&mut v);
+        }
+        Method::Ml => mlv(&mut v),
+        Method::All => {
+            yn(&mut v);
+            ng(&mut v);
+            mlv(&mut v);
+        }
     }
+    v.push(r.length.to_string());
     v
 }
 
@@ -312,17 +389,25 @@ fn write_json(out: &mut Box<dyn Write>, results: &[PairResult], method: Method) 
             "\"seq1\":{:?},\"seq2\":{:?},\"length\":{}",
             r.seq1, r.seq2, r.length
         );
-        if matches!(method, Method::Yn00 | Method::Both) {
+        if matches!(method, Method::Yn00 | Method::Both | Method::All) {
             fields += &format!(
                 ",\"dN\":{:.6},\"dS\":{:.6},\"omega\":{:.6},\"N\":{:.6},\"S\":{:.6},\"kappa\":{:.6},\"t\":{:.6},\"SE_dN\":{:.6},\"SE_dS\":{:.6}",
                 r.dn, r.ds, r.omega, r.n_sites, r.s_sites, r.kappa, r.t, r.se_dn, r.se_ds
             );
         }
-        if matches!(method, Method::Ng86 | Method::Both) {
+        if matches!(method, Method::Ng86 | Method::Both | Method::All) {
             fields += &format!(
                 ",\"NG_dN\":{:.6},\"NG_dS\":{:.6},\"NG_omega\":{:.6}",
                 r.ng_dn, r.ng_ds, r.ng_omega
             );
+        }
+        if matches!(method, Method::Ml | Method::All) {
+            if let Some(m) = &r.ml {
+                fields += &format!(
+                    ",\"ML_dN\":{:.6},\"ML_dS\":{:.6},\"ML_omega\":{:.6},\"ML_N\":{:.6},\"ML_S\":{:.6},\"ML_kappa\":{:.6},\"ML_t\":{:.6},\"lnL\":{:.6},\"ML_SE_dN\":{:.6},\"ML_SE_dS\":{:.6},\"ML_SE_t\":{:.6},\"ML_SE_kappa\":{:.6},\"ML_SE_omega\":{:.6},\"ML_converged\":{},\"ML_nfun\":{}",
+                    m.dn, m.ds, m.omega, m.n_sites, m.s_sites, m.kappa, m.t, m.lnl, m.se_dn, m.se_ds, m.se_t, m.se_kappa, m.se_omega, m.converged, m.nfun
+                );
+            }
         }
         writeln!(out, "  {{{fields}}}{comma}")?;
     }

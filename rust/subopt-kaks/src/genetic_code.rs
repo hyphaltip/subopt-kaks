@@ -155,10 +155,11 @@ pub fn translate(bases: &[u8], code: usize) -> Vec<u8> {
 mod tests {
     use super::*;
 
-    /// The six tables PAML ships (`GeneticCode` in tools.c), in PAML order
-    /// 0..=5, correspond to NCBI tables 1,2,3,4,5,6. They are identical except
-    /// for one codon: PAML's yeast-mitochondrial table (index 2) keeps TGA as
-    /// a stop, while NCBI table 3 translates TGA as Trp. NCBI is used here.
+    /// The six tables in the PAML copy bundled in `src/tools.c` (2004), in
+    /// PAML order 0..=5, correspond to NCBI tables 1,2,3,4,5,6. They are
+    /// identical except for one codon: that old yeast-mitochondrial table
+    /// (index 2) keeps TGA as a stop, while NCBI table 3 (and current PAML
+    /// 4.10) translate TGA as Trp. NCBI is used here.
     #[test]
     fn matches_paml_tables() {
         const PAML: [[i8; 64]; 6] = [

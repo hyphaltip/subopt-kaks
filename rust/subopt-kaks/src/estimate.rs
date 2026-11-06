@@ -7,6 +7,7 @@
 //! taken as all-ones), so no codon-model eigendecomposition is required here.
 
 use crate::genetic_code::{AAS, BY, GENETIC_CODES};
+use crate::ml::{pairwise_ml, CodonFreq, MlResult};
 
 const NCODE: usize = 64;
 const ACCURACY: f64 = 1e-9;
@@ -42,6 +43,8 @@ pub struct PairResult {
     pub ng_dn: f64,
     pub ng_ds: f64,
     pub ng_omega: f64,
+    /// Pairwise ML (Goldman & Yang 1994) when requested
+    pub ml: Option<MlResult>,
     pub length: usize,
 }
 
@@ -123,13 +126,15 @@ fn f3x4s(data: &CodonData) -> Vec<[f64; 12]> {
         .collect()
 }
 
-/// Codon frequencies pi[64] from the averaged F3x4 table (`GetFreqs`, fcommon=1).
-fn get_freqs(data: &CodonData, f3: &[[f64; 12]]) -> Result<[f64; NCODE], String> {
+/// Codon frequencies pi[64] from the F3x4 tables of the sequences in `which`
+/// (PAML `GetFreqs`: all sequences when `commonf3x4 = 1`, the two sequences
+/// of a pair otherwise).
+fn get_freqs(data: &CodonData, f3: &[[f64; 12]], which: &[usize]) -> Result<[f64; NCODE], String> {
     let table = &GENETIC_CODES[data.code];
     let mut f3x4 = [0.0f64; 12];
-    for fi in f3 {
+    for &i in which {
         for k in 0..12 {
-            f3x4[k] += fi[k] / data.ns as f64;
+            f3x4[k] += f3[i][k] / which.len() as f64;
         }
     }
     let mut pi = [0.0f64; NCODE];
@@ -585,7 +590,9 @@ fn distance_yn00(
 }
 
 /// Nei & Gojobori (1986) distance for one pair (`DistanceMatNG86` + `difcodonNG`).
-fn ng86_pair(z1: &[u8], z2: &[u8], ls: usize, code: usize) -> (f64, f64, f64) {
+/// Returns (dN, dS, omega, t) where t is the NG86 distance in substitutions
+/// per codon (PAML `SeqDistance`), or -1 when dN or dS is undefined.
+fn ng86_pair(z1: &[u8], z2: &[u8], ls: usize, code: usize) -> (f64, f64, f64, f64) {
     let (mut nst, mut nat, mut st_tot, mut nt_tot) = (0.0f64, 0.0f64, 0.0f64, 0.0f64);
     for h in 0..z1.len() {
         let (s, n, ns, na) = difcodon_ng(z1[h] as usize, z2[h] as usize, code);
@@ -614,7 +621,12 @@ fn ng86_pair(z1: &[u8], z2: &[u8], ls: usize, code: usize) -> (f64, f64, f64) {
         -3.0 / 4.0 * dn.ln()
     };
     let omega = if ds > 0.0 { dn / ds } else { -1.0 };
-    (dn, ds, omega)
+    let t = if ds >= 0.0 && dn >= 0.0 && st_tot > 0.0 && nt_tot > 0.0 {
+        (st_tot * ds + nt_tot * dn) * 3.0 / (st_tot + nt_tot)
+    } else {
+        -1.0
+    };
+    (dn, ds, omega, t)
 }
 
 /// Sites and differences for a codon pair under NG86 (`difcodonNG`, transfed=1).
@@ -726,17 +738,37 @@ fn difcodon_ng(iy0: usize, iy1: usize, code: usize) -> (f64, f64, f64, f64) {
     (syn_site, asyn_site, syn_dif, asyn_dif)
 }
 
-/// Run all pairwise comparisons.
-pub fn run(data: &CodonData) -> Vec<PairResult> {
+/// Run all pairwise comparisons. `ml` selects the codon-frequency model for
+/// the pairwise ML estimate, or `None` to skip it. `common_f3x4` pools the
+/// F3x4 codon frequencies over all sequences (PAML yn00 `commonf3x4 = 1`, the
+/// behaviour of the C `yn00_cds_*` tools); otherwise each pair uses its own
+/// two sequences (PAML yn00 default). Kappa is always estimated once from all
+/// pairs (`commonkappa = 1`).
+pub fn run(
+    data: &CodonData,
+    ml: Option<CodonFreq>,
+    common_f3x4: bool,
+) -> Result<Vec<PairResult>, String> {
     let f3 = f3x4s(data);
-    let pi = get_freqs(data, &f3).unwrap_or([0.0; NCODE]);
+    let all: Vec<usize> = (0..data.ns).collect();
+    let pi_common = get_freqs(data, &f3, &all).unwrap_or([0.0; NCODE]);
     let kappa = get_kappa(data, 4.6);
 
     let mut out = Vec::new();
     for i in 0..data.ns {
         for j in (i + 1)..data.ns {
+            let pi = if common_f3x4 {
+                pi_common
+            } else {
+                get_freqs(data, &f3, &[i, j]).unwrap_or([0.0; NCODE])
+            };
             let (s, n, ds, dn, se_ds, se_dn, t, omega) = distance_yn00(i, j, data, &pi, kappa);
-            let (ng_dn, ng_ds, ng_omega) = ng86_pair(&data.z[i], &data.z[j], data.ls, data.code);
+            let (ng_dn, ng_ds, ng_omega, ng_t) =
+                ng86_pair(&data.z[i], &data.z[j], data.ls, data.code);
+            let ml_res = match ml {
+                Some(cf) => Some(pairwise_ml(&data.z[i], &data.z[j], data.code, cf, ng_t)?),
+                None => None,
+            };
             out.push(PairResult {
                 seq1: data.names[i].clone(),
                 seq2: data.names[j].clone(),
@@ -752,11 +784,12 @@ pub fn run(data: &CodonData) -> Vec<PairResult> {
                 ng_dn,
                 ng_ds,
                 ng_omega,
+                ml: ml_res,
                 length: data.alen,
             });
         }
     }
-    out
+    Ok(out)
 }
 
 // silence unused import warning if AAS is only referenced conditionally

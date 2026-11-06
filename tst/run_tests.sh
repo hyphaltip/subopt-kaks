@@ -58,6 +58,9 @@ else
     check kaks_cds        "$BIN/kaks" F35G8.1_CBG16160.cds.fas
     check kaks_code5      "$BIN/kaks" --genetic-code 5 F35G8.1_CBG16160.cds.fas
     check kaks_list_codes "$BIN/kaks" --list-codes
+    check kaks_ml         "$BIN/kaks" --method ml --prealigned F35G8.1_CBG16160.cds.aln
+    check kaks_all_fcodon "$BIN/kaks" --method all --codon-freq fcodon --prealigned F35G8.1_CBG16160.cds.aln
+    check kaks_ml_hiv_code4 "$BIN/kaks" --method ml --genetic-code 4 --format json HIV_test.fa
 fi
 
 echo "$pass passed, $fail failed"

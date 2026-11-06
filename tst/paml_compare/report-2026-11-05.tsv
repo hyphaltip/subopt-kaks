@@ -1,0 +1,198 @@
+dataset	test	pair	status	detail
+genetic_code	paml_icode_0	universal	NCBI 1 OK	
+genetic_code	paml_icode_1	vertebrate mt.	NCBI 2 OK	
+genetic_code	paml_icode_2	yeast mt.	NCBI 3 OK	
+genetic_code	paml_icode_3	mold mt.	NCBI 4 OK	
+genetic_code	paml_icode_4	invertebrate mt.	NCBI 5 OK	
+genetic_code	paml_icode_5	ciliate nuclear	NCBI 6 OK	
+genetic_code	paml_icode_6	echinoderm mt.	NCBI 9 OK	
+genetic_code	paml_icode_7	euplotid mt.	NCBI 10 OK	
+genetic_code	paml_icode_8	alternative yeast nu.	NCBI 12 OK	
+genetic_code	paml_icode_9	ascidian mt.	NCBI 13 OK	
+genetic_code	paml_icode_10	blepharisma nu.	NCBI 15 OK	
+genetic_code	paml_icode_11	Ziheng's regular code	NCBI 10 DIFF	TTT:PAML=R,NCBI=F TTC:PAML=R,NCBI=F TTA:PAML=R,NCBI=L TTG:PAML=R,NCBI=L TCT:PAML=N,NCBI=S TCC:PAML=N,NCBI=S TCA:PAML=N,NCBI=S TCG:PAML=N,NCBI=S TAT:PAML=D,NCBI=Y TAC:PAML=D,NCBI=Y TAA:PAML=D,NCBI=* TAG:PAML=D,NCBI=* TGG:PAML=C,NCBI=W CTT:PAML=Q,NCBI=L CTC:PAML=Q,NCBI=L CTA:PAML=Q,NCBI=L CTG:PAML=Q,NCBI=L CCT:PAML=E,NCBI=P CCC:PAML=E,NCBI=P CCA:PAML=E,NCBI=P CCG:PAML=E,NCBI=P CAT:PAML=G,NCBI=H CAC:PAML=G,NCBI=H CAA:PAML=G,NCBI=Q CAG:PAML=G,NCBI=Q CGT:PAML=H,NCBI=R CGC:PAML=H,NCBI=R CGA:PAML=H,NCBI=R CGG:PAML=H,NCBI=R ATG:PAML=I,NCBI=M ACT:PAML=L,NCBI=T ACC:PAML=L,NCBI=T ACA:PAML=L,NCBI=T ACG:PAML=L,NCBI=T AAT:PAML=K,NCBI=N AAC:PAML=K,NCBI=N AGT:PAML=M,NCBI=S AGC:PAML=M,NCBI=S AGA:PAML=M,NCBI=R AGG:PAML=M,NCBI=R GTT:PAML=F,NCBI=V GTC:PAML=F,NCBI=V GTA:PAML=F,NCBI=V GTG:PAML=F,NCBI=V GCT:PAML=P,NCBI=A GCC:PAML=P,NCBI=A GCA:PAML=P,NCBI=A GCG:PAML=P,NCBI=A GAT:PAML=S,NCBI=D GAC:PAML=S,NCBI=D GAA:PAML=S,NCBI=E GAG:PAML=S,NCBI=E GGT:PAML=T,NCBI=G GGC:PAML=T,NCBI=G GGA:PAML=T,NCBI=G GGG:PAML=T,NCBI=G
+abglobin_5seq_interleaved_dots	ml_cf2	marsupial-rat	FAIL	t: codeml=2.57524 kaks=1.663071 diff=0.912 > 0.0002; kappa: codeml=0.82354 kaks=1.021181 diff=0.198 > 0.0002; omega: codeml=0.06306 kaks=0.123179 diff=0.0601 > 0.0002; dN: codeml=0.21283 kaks=0.22139 diff=0.00856 > 0.0002; dS: codeml=3.37558 kaks=1.797307 diff=1.58 > 0.0002; S: codeml=174.5 kaks=180.648373 diff=6.15 > 0.06; N: codeml=680.5 kaks=674.351627 diff=6.15 > 0.06
+abglobin_5seq_interleaved_dots	ml_cf3	marsupial-human	SE_WARN	se_dN: codeml=0.02324 kaks=0.019372
+abglobin_5seq_interleaved_dots	ml_cf3	marsupial-goat-cow	SE_WARN	se_dN: codeml=0.02347 kaks=0.019808
+abglobin_5seq_interleaved_dots	ml_cf3	marsupial-rabbit	SE_WARN	se_dN: codeml=0.02652 kaks=0.020352
+abglobin_5seq_interleaved_dots	ml_cf3	marsupial-rat	SE_WARN	se_dN: codeml=0.02738 kaks=0.022918
+abglobin_5seq_interleaved_dots	summary	5 seqs	50 comparisons	1 failures
+lysozymeSmall_7seq_ambiguity	ml_cf0	Cgu/Can_colobus-Hla_gibbon	SE_WARN	se_kappa: codeml=1.16745 kaks=1.492426
+lysozymeSmall_7seq_ambiguity	ml_cf1	Cgu/Can_colobus-Hsa_Human	SE_WARN	se_dS: codeml=0.01961 kaks=0.025259; se_kappa: codeml=1.25531 kaks=1.498415; se_omega: codeml=0.65288 kaks=0.908541
+lysozymeSmall_7seq_ambiguity	ml_cf1	Cgu/Can_colobus-Hla_gibbon	SE_WARN	se_omega: codeml=0.66978 kaks=0.783555
+lysozymeSmall_7seq_ambiguity	ml_cf2	Cgu/Can_colobus-Hsa_Human	SE_WARN	se_dS: codeml=0.02076 kaks=0.025243; se_kappa: codeml=1.07927 kaks=1.339839; se_omega: codeml=0.56966 kaks=0.746898
+lysozymeSmall_7seq_ambiguity	ml_cf3	Cgu/Can_colobus-Hla_gibbon	SE_WARN	se_kappa: codeml=1.19259 kaks=1.39664; se_omega: codeml=0.61779 kaks=0.717993
+lysozymeSmall_7seq_ambiguity	ml_cf3	Cja_marmoset-Cgu/Can_colobus	SE_WARN	se_kappa: codeml=1.68504 kaks=1.987486
+lysozymeSmall_7seq_ambiguity	summary	7 seqs	105 comparisons	0 failures
+HIVenv_13seq	ml_cf0	U68499-U68498	SE_WARN	se_dS: codeml=0.00183 kaks=0.001479; se_omega: codeml=242.20878 kaks=195.047554
+HIVenv_13seq	ml_cf0	U68502-U68499	SE_WARN	se_dS: codeml=0.02602 kaks=0.0314; se_omega: codeml=1.36739 kaks=1.697477
+HIVenv_13seq	ml_cf1	U68499-U68498	SE_WARN	se_dS: codeml=0.00161 kaks=0.00229; se_omega: codeml=240.26656 kaks=342.49402
+HIVenv_13seq	ml_cf2	U68499-U68498	SE_WARN	se_dS: codeml=0.00137 kaks=0.001917; se_omega: codeml=210.44215 kaks=296.442871
+HIVenv_13seq	ml_cf3	U68499-U68498	SE_WARN	se_dS: codeml=0.00159 kaks=0.00118; se_omega: codeml=239.89194 kaks=176.916824
+HIVenv_13seq	ml_cf3	U68503-U68498	SE_WARN	se_dS: codeml=0.02918 kaks=0.03805; se_kappa: codeml=0.64383 kaks=0.858038; se_omega: codeml=0.73711 kaks=1.008696
+HIVenv_13seq	ml_cf3	U68503-U68499	SE_WARN	se_dS: codeml=0.03963 kaks=0.086638; se_kappa: codeml=1.66574 kaks=1.213077; se_omega: codeml=0.82084 kaks=1.934836
+HIVenv_13seq	ml_cf3	U68503-U68500	SE_WARN	se_dS: codeml=0.06934 kaks=0.088733; se_kappa: codeml=0.67831 kaks=1.024986; se_omega: codeml=0.42018 kaks=0.561627
+HIVenv_13seq	ml_cf3	U68503-U68501	SE_WARN	se_dS: codeml=0.04307 kaks=0.049552; se_omega: codeml=0.7967 kaks=0.94724
+HIVenv_13seq	ml_cf3	U68504-U68496	SE_WARN	se_dS: codeml=0.07537 kaks=0.090056; se_kappa: codeml=0.6252 kaks=0.754645; se_omega: codeml=0.26865 kaks=0.336008
+HIVenv_13seq	ml_cf3	U68505-U68496	SE_WARN	se_dS: codeml=0.07786 kaks=0.089831; se_kappa: codeml=0.78794 kaks=0.99422; se_omega: codeml=0.26487 kaks=0.315023
+HIVenv_13seq	ml_cf3	U68505-U68497	SE_WARN	se_dS: codeml=0.0713 kaks=0.083506; se_omega: codeml=0.31238 kaks=0.383671
+HIVenv_13seq	ml_cf3	U68505-U68503	SE_WARN	se_dS: codeml=0.05274 kaks=0.071414; se_kappa: codeml=1.10522 kaks=1.476704; se_omega: codeml=0.26007 kaks=0.395399
+HIVenv_13seq	ml_cf3	U68507-U68503	SE_WARN	se_kappa: codeml=1.09034 kaks=1.512822
+HIVenv_13seq	summary	13 seqs	390 comparisons	0 failures
+myxovirus_12seq	ml_cf1	Human_Mx-Rhesus_macaque_Mx	SE_WARN	se_kappa: codeml=1.19559 kaks=1.38681
+myxovirus_12seq	ml_cf2	Orangutan_Mx-Rhesus_macaque_Mx	SE_WARN	se_kappa: codeml=1.99222 kaks=1.503835
+myxovirus_12seq	ml_cf2	Chicken_Mx-Pig_Mx	FAIL	t: codeml=26.90834 kaks=26.971843 diff=0.0635 > 0.0002; dS: codeml=32.53374 kaks=32.612599 diff=0.0789 > 0.0002
+myxovirus_12seq	ml_cf3	Chicken_Mx-Rhesus_macaque_Mx	SE_WARN	se_dN: codeml=0.03432 kaks=0.027812
+myxovirus_12seq	ml_cf3	Chicken_Mx-Orangutan_Mx	SE_WARN	se_dN: codeml=0.03503 kaks=0.028161
+myxovirus_12seq	ml_cf3	Chicken_Mx-Chimpanzee_Mx	SE_WARN	se_dN: codeml=0.03519 kaks=0.028273
+myxovirus_12seq	ml_cf3	Chicken_Mx-Human_Mx	SE_WARN	se_dN: codeml=0.03463 kaks=0.027919
+myxovirus_12seq	ml_cf3	Chicken_Mx-Dog_Mx	SE_WARN	se_dN: codeml=0.03727 kaks=0.030684
+myxovirus_12seq	ml_cf3	Chicken_Mx-Pig_Mx	SE_WARN	se_dN: codeml=0.03646 kaks=0.02946
+myxovirus_12seq	ml_cf3	Chicken_Mx-Cow_Mx	SE_WARN	se_dN: codeml=0.03751 kaks=0.030486
+myxovirus_12seq	ml_cf3	Chicken_Mx-Sheep_Mx	SE_WARN	se_dN: codeml=0.03755 kaks=0.030754
+myxovirus_12seq	ml_cf3	Chicken_Mx-Rat_Mx	SE_WARN	se_dN: codeml=0.03956 kaks=0.031336
+myxovirus_12seq	ml_cf3	Chicken_Mx-Mouse_Mx	SE_WARN	se_dN: codeml=0.03937 kaks=0.03187
+myxovirus_12seq	ml_cf3	Duck_Mx-Rhesus_macaque_Mx	SE_WARN	se_dN: codeml=0.02864 kaks=0.023758
+myxovirus_12seq	ml_cf3	Duck_Mx-Orangutan_Mx	SE_WARN	se_dN: codeml=0.02875 kaks=0.024035
+myxovirus_12seq	ml_cf3	Duck_Mx-Chimpanzee_Mx	SE_WARN	se_dN: codeml=0.02883 kaks=0.024076
+myxovirus_12seq	ml_cf3	Duck_Mx-Human_Mx	SE_WARN	se_dN: codeml=0.02857 kaks=0.023939
+myxovirus_12seq	ml_cf3	Duck_Mx-Pig_Mx	FAIL	t: codeml=22.68208 kaks=22.793519 diff=0.111 > 0.0002; dS: codeml=26.85028 kaks=26.987178 diff=0.137 > 0.0002
+myxovirus_12seq	ml_cf3	Duck_Mx-Cow_Mx	SE_WARN	se_dN: codeml=0.0333 kaks=0.026858; se_dS: codeml=25.4564 kaks=31.158377; se_t: codeml=20.72222 kaks=25.477039; se_omega: codeml=0.03383 kaks=0.04154
+myxovirus_12seq	ml_cf3	Duck_Mx-Sheep_Mx	SE_WARN	se_dN: codeml=0.0326 kaks=0.026684
+myxovirus_12seq	ml_cf3	Duck_Mx-Rat_Mx	SE_WARN	se_dN: codeml=0.03425 kaks=0.025606; se_dS: codeml=68.86436 kaks=86.284837; se_t: codeml=52.40582 kaks=65.884724; se_omega: codeml=0.00734 kaks=0.009178
+myxovirus_12seq	ml_cf3	Duck_Mx-Mouse_Mx	SE_WARN	se_dN: codeml=0.03449 kaks=0.027696
+myxovirus_12seq	summary	12 seqs	330 comparisons	2 failures
+ECP_EDN_15seq	ml_cf0	Chimp_ECP-Human_ECP	SE_WARN	se_dS: codeml=0.0003 kaks=0.000375; se_omega: codeml=232.78082 kaks=298.99502
+ECP_EDN_15seq	ml_cf0	Papio_EDN-Macaq2_EDN	SE_WARN	se_dN: codeml=0.0032 kaks=0.0; se_dS: codeml=0.00054 kaks=0.0; se_t: codeml=0.00627 kaks=0.0; se_kappa: codeml=11863.30935 kaks=0.0; se_omega: codeml=1677.7251 kaks=0.0
+ECP_EDN_15seq	ml_cf0	Cercopith_EDN-Macaq2_EDN	SE_WARN	se_kappa: codeml=3.49031 kaks=4.912982
+ECP_EDN_15seq	ml_cf0	Cercopith_EDN-Papio_EDN	SE_WARN	se_kappa: codeml=3.00834 kaks=3.77619
+ECP_EDN_15seq	ml_cf1	Chimp_ECP-Human_ECP	SE_WARN	se_dS: codeml=0.0003 kaks=0.000398; se_omega: codeml=233.36982 kaks=317.388339
+ECP_EDN_15seq	ml_cf1	Cercopith_EDN-Macaq2_EDN	SE_WARN	se_kappa: codeml=3.8126 kaks=4.80192
+ECP_EDN_15seq	ml_cf2	Macaq2_ECP-Macaq_ECP	SE_WARN	se_omega: codeml=2.35984 kaks=2.731644
+ECP_EDN_15seq	ml_cf2	Papio_EDN-Macaq2_EDN	SE_WARN	se_dS: codeml=3e-05 kaks=0.000127; se_omega: codeml=0.25357 kaks=378.315907
+ECP_EDN_15seq	ml_cf2	Cercopith_EDN-Papio_EDN	SE_WARN	se_kappa: codeml=3.19669 kaks=4.927145
+ECP_EDN_15seq	ml_cf3	Chimp_ECP-Human_ECP	SE_WARN	se_dS: codeml=0.00039 kaks=0.000481; se_omega: codeml=302.79182 kaks=380.294105
+ECP_EDN_15seq	ml_cf3	Orang_ECP-Human_ECP	SE_WARN	se_dS: codeml=0.00821 kaks=0.00972; se_omega: codeml=3.29782 kaks=3.968056
+ECP_EDN_15seq	ml_cf3	Orang_ECP-Goril_ECP	SE_WARN	se_dS: codeml=0.00932 kaks=0.011016; se_omega: codeml=1.77663 kaks=2.166329
+ECP_EDN_15seq	ml_cf3	Orang_ECP-Chimp_ECP	SE_WARN	se_dS: codeml=0.00663 kaks=0.009224; se_omega: codeml=2.93066 kaks=4.312485
+ECP_EDN_15seq	ml_cf3	Macaq2_ECP-Macaq_ECP	SE_WARN	se_kappa: codeml=1.45765 kaks=1.706054
+ECP_EDN_15seq	ml_cf3	Papio_EDN-Macaq2_EDN	SE_WARN	se_dS: codeml=0.00021 kaks=3.2e-05; se_kappa: codeml=8967.79989 kaks=0.0; se_omega: codeml=634.11917 kaks=0.419699
+ECP_EDN_15seq	ml_cf3	Cercopith_EDN-Macaq2_EDN	SE_WARN	se_kappa: codeml=4.64916 kaks=6.258179
+ECP_EDN_15seq	summary	15 seqs	525 comparisons	0 failures
+lysin_25seq	ml_cf0	__2_H._sorenseni-__1_H._rufescens	SE_WARN	se_dS: codeml=0.00805 kaks=0.009533; se_omega: codeml=4.19276 kaks=5.037544
+lysin_25seq	ml_cf0	__3_H._walallensis-__1_H._rufescens	SE_WARN	se_dS: codeml=0.00447 kaks=0.005435; se_omega: codeml=2.01908 kaks=2.688566
+lysin_25seq	ml_cf0	__3_H._walallensis-__2_H._sorenseni	SE_WARN	se_omega: codeml=0.21857 kaks=0.263684
+lysin_25seq	ml_cf0	__4_H._kamtschatkana-__3_H._walallensis	SE_WARN	se_dS: codeml=0.02191 kaks=0.025297; se_omega: codeml=1.12552 kaks=1.331781
+lysin_25seq	ml_cf0	__7_H._gigantea-__6_H._discus_hannai	SE_WARN	se_dS: codeml=0.00037 kaks=0.0; se_omega: codeml=488.92944 kaks=0.0
+lysin_25seq	ml_cf0	_16_H._conicopora-_15_H._rubra	SE_WARN	se_dS: codeml=0.00051 kaks=0.000425; se_kappa: codeml=10273.90624 kaks=6059.218712; se_omega: codeml=593.16444 kaks=494.733756
+lysin_25seq	ml_cf1	__2_H._sorenseni-__1_H._rufescens	SE_WARN	se_dS: codeml=0.00934 kaks=0.010938; se_omega: codeml=5.11911 kaks=6.058566
+lysin_25seq	ml_cf1	__3_H._walallensis-__1_H._rufescens	SE_WARN	se_dS: codeml=0.00451 kaks=0.005326; se_omega: codeml=2.28622 kaks=2.838404
+lysin_25seq	ml_cf1	__3_H._walallensis-__2_H._sorenseni	SE_WARN	se_dN: codeml=0.00973 kaks=0.012463
+lysin_25seq	ml_cf1	__7_H._gigantea-__6_H._discus_hannai	SE_WARN	se_dS: codeml=0.00099 kaks=0.0; se_kappa: codeml=3.94848 kaks=0.057148; se_omega: codeml=1346.78906 kaks=0.0
+lysin_25seq	ml_cf1	__9_H._cracherodii-__6_H._discus_hannai	SE_WARN	se_dS: codeml=0.03412 kaks=0.027525; se_omega: codeml=1.3618 kaks=1.073038
+lysin_25seq	ml_cf1	_16_H._conicopora-_15_H._rubra	SE_WARN	se_dS: codeml=0.00034 kaks=0.000597; se_omega: codeml=390.06491 kaks=699.66164
+lysin_25seq	ml_cf2	__3_H._walallensis-__1_H._rufescens	SE_WARN	se_dN: codeml=0.01801 kaks=0.0; se_dS: codeml=0.00434 kaks=0.0; se_kappa: codeml=0.56952 kaks=0.0; se_omega: codeml=2.15973 kaks=0.0
+lysin_25seq	ml_cf2	__3_H._walallensis-__2_H._sorenseni	SE_WARN	se_dN: codeml=0.0121 kaks=0.014043; se_dS: codeml=0.01176 kaks=0.024757; se_kappa: codeml=0.45037 kaks=0.905505; se_omega: codeml=0.30858 kaks=0.997064
+lysin_25seq	ml_cf2	__5_H._sieboldii-__3_H._walallensis	SE_WARN	se_dS: codeml=0.02095 kaks=0.028906; se_kappa: codeml=0.36015 kaks=0.465338; se_omega: codeml=0.54693 kaks=0.832961
+lysin_25seq	ml_cf2	__6_H._discus_hannai-__3_H._walallensis	SE_WARN	se_dS: codeml=0.03222 kaks=0.037541; se_omega: codeml=0.95518 kaks=1.134507
+lysin_25seq	ml_cf2	__6_H._discus_hannai-__4_H._kamtschatkana	SE_WARN	se_dS: codeml=0.02909 kaks=0.034324; se_omega: codeml=1.383 kaks=1.663048
+lysin_25seq	ml_cf2	__7_H._gigantea-__3_H._walallensis	SE_WARN	se_dS: codeml=0.02664 kaks=0.032531; se_omega: codeml=0.84074 kaks=1.063071
+lysin_25seq	ml_cf2	__7_H._gigantea-__4_H._kamtschatkana	SE_WARN	se_dS: codeml=0.02685 kaks=0.032998; se_omega: codeml=1.46908 kaks=1.846658
+lysin_25seq	ml_cf2	__8_H._corrugata-__3_H._walallensis	SE_WARN	se_dS: codeml=0.02807 kaks=0.041161; se_omega: codeml=0.41425 kaks=0.668808
+lysin_25seq	ml_cf2	__8_H._corrugata-__6_H._discus_hannai	SE_WARN	se_dS: codeml=0.01947 kaks=0.022613; se_omega: codeml=3.24508 kaks=3.815233
+lysin_25seq	ml_cf2	__9_H._cracherodii-__7_H._gigantea	SE_WARN	se_dS: codeml=0.01692 kaks=0.033392; se_kappa: codeml=0.44126 kaks=0.547509; se_omega: codeml=0.67824 kaks=1.555181
+lysin_25seq	ml_cf2	_16_H._conicopora-_15_H._rubra	SE_WARN	se_dS: codeml=0.00046 kaks=0.000614; se_omega: codeml=517.75613 kaks=690.710604
+lysin_25seq	ml_cf3	__2_H._sorenseni-__1_H._rufescens	SE_WARN	se_kappa: codeml=2.7922 kaks=3.569039; se_omega: codeml=1.7931 kaks=2.103591
+lysin_25seq	ml_cf3	__3_H._walallensis-__2_H._sorenseni	SE_WARN	se_dS: codeml=0.01074 kaks=0.014877; se_kappa: codeml=0.34825 kaks=0.806691; se_omega: codeml=0.21167 kaks=0.488929
+lysin_25seq	ml_cf3	__6_H._discus_hannai-__1_H._rufescens	SE_WARN	se_dS: codeml=0.0153 kaks=0.020331; se_kappa: codeml=0.21776 kaks=0.294984; se_omega: codeml=0.3852 kaks=0.638976
+lysin_25seq	ml_cf3	__6_H._discus_hannai-__3_H._walallensis	SE_WARN	se_dS: codeml=0.02248 kaks=0.030274; se_kappa: codeml=0.16753 kaks=0.316037; se_omega: codeml=0.54904 kaks=0.807126
+lysin_25seq	ml_cf3	__6_H._discus_hannai-__4_H._kamtschatkana	SE_WARN	se_omega: codeml=0.64288 kaks=0.742194
+lysin_25seq	ml_cf3	__6_H._discus_hannai-__5_H._sieboldii	SE_WARN	se_dS: codeml=0.01559 kaks=0.024982; se_kappa: codeml=0.37096 kaks=0.626198; se_omega: codeml=0.36333 kaks=0.735135
+lysin_25seq	ml_cf3	__7_H._gigantea-__1_H._rufescens	SE_WARN	se_dS: codeml=0.01604 kaks=0.027667; se_kappa: codeml=0.19141 kaks=0.40698; se_omega: codeml=0.38691 kaks=0.847412
+lysin_25seq	ml_cf3	__7_H._gigantea-__2_H._sorenseni	SE_WARN	se_dS: codeml=0.01645 kaks=0.019571; se_kappa: codeml=0.17969 kaks=0.248526; se_omega: codeml=0.46495 kaks=0.61571
+lysin_25seq	ml_cf3	__7_H._gigantea-__3_H._walallensis	SE_WARN	se_dS: codeml=0.0178 kaks=0.022691; se_kappa: codeml=0.13958 kaks=0.203748; se_omega: codeml=0.34911 kaks=0.533617
+lysin_25seq	ml_cf3	__7_H._gigantea-__4_H._kamtschatkana	SE_WARN	se_dS: codeml=0.02495 kaks=0.033657; se_omega: codeml=0.73515 kaks=1.052655
+lysin_25seq	ml_cf3	__7_H._gigantea-__6_H._discus_hannai	SE_WARN	se_dS: codeml=0.00089 kaks=0.0004; se_omega: codeml=1196.64999 kaks=531.40929
+lysin_25seq	ml_cf3	__8_H._corrugata-__3_H._walallensis	SE_WARN	se_dS: codeml=0.02937 kaks=0.039346; se_kappa: codeml=0.38588 kaks=0.449167; se_omega: codeml=0.38683 kaks=0.573033
+lysin_25seq	ml_cf3	__8_H._corrugata-__6_H._discus_hannai	SE_WARN	se_dS: codeml=0.00421 kaks=0.010797
+lysin_25seq	ml_cf3	__8_H._corrugata-__7_H._gigantea	SE_WARN	se_dS: codeml=0.00903 kaks=0.014126; se_kappa: codeml=0.22195 kaks=0.42944; se_omega: codeml=0.45556 kaks=0.999074
+lysin_25seq	ml_cf3	_16_H._conicopora-_15_H._rubra	SE_WARN	se_dS: codeml=0.00025 kaks=0.000487; se_omega: codeml=272.16307 kaks=533.889851
+lysin_25seq	summary	25 seqs	1500 comparisons	0 failures
+mtCDNApri_7seq_vertmito	ml_cf2	gibbon-human	SE_WARN	se_kappa: codeml=0.91064 kaks=1.058764
+mtCDNApri_7seq_vertmito	ml_cf2	gibbon-chimpanzee	SE_WARN	se_kappa: codeml=0.91233 kaks=1.103768
+mtCDNApri_7seq_vertmito	ml_cf2	gibbon-Sumatran	SE_WARN	se_kappa: codeml=0.62451 kaks=0.910971
+mtCDNApri_7seq_vertmito	ml_cf3	gibbon-human	SE_WARN	se_kappa: codeml=0.90623 kaks=1.140798
+mtCDNApri_7seq_vertmito	ml_cf3	gibbon-chimpanzee	SE_WARN	se_t: codeml=0.10633 kaks=0.123588; se_kappa: codeml=0.82241 kaks=1.184361
+mtCDNApri_7seq_vertmito	ml_cf3	gibbon-bonobo	SE_WARN	se_dS: codeml=0.11291 kaks=0.131324; se_t: codeml=0.09678 kaks=0.116944; se_kappa: codeml=0.75647 kaks=1.193371
+mtCDNApri_7seq_vertmito	ml_cf3	gibbon-gorilla	SE_WARN	se_t: codeml=0.11362 kaks=0.130935; se_kappa: codeml=0.8634 kaks=1.176551
+mtCDNApri_7seq_vertmito	ml_cf3	gibbon-orangutan	SE_WARN	se_kappa: codeml=0.49284 kaks=0.669616
+mtCDNApri_7seq_vertmito	ml_cf3	gibbon-Sumatran	SE_WARN	se_dS: codeml=0.10728 kaks=0.123425; se_t: codeml=0.08799 kaks=0.104486; se_kappa: codeml=0.53599 kaks=0.900824
+mtCDNApri_7seq_vertmito	summary	7 seqs	105 comparisons	0 failures
+mtCDNAape_6seq_vertmito	ml_cf0	6.Gorilla_Arnason-5.Gorilla_Horai	SE_WARN	se_kappa: codeml=0.3506 kaks=0.490768; se_omega: codeml=0.04857 kaks=0.089865
+mtCDNAape_6seq_vertmito	ml_cf1	6.Gorilla_Arnason-5.Gorilla_Horai	SE_WARN	se_kappa: codeml=0.76499 kaks=0.501964; se_omega: codeml=0.10041 kaks=0.063263
+mtCDNAape_6seq_vertmito	ml_cf3	6.Gorilla_Arnason-5.Gorilla_Horai	SE_WARN	se_kappa: codeml=0.13882 kaks=0.025508; se_omega: codeml=0.01373 kaks=0.0
+mtCDNAape_6seq_vertmito	summary	6 seqs	75 comparisons	0 failures
+lysozymeSmall_moldmito	ml_cf0	Cja_marmoset-Cgu/Can_colobus	SE_WARN	se_kappa: codeml=1.41851 kaks=1.72862
+lysozymeSmall_moldmito	ml_cf0	Cja_marmoset-Pne_langur	SE_WARN	se_kappa: codeml=2.20155 kaks=2.613475
+lysozymeSmall_moldmito	ml_cf1	Cgu/Can_colobus-Hsa_Human	SE_WARN	se_dS: codeml=0.01818 kaks=0.021836; se_kappa: codeml=1.09382 kaks=1.406356; se_omega: codeml=0.65099 kaks=0.832172
+lysozymeSmall_moldmito	ml_cf1	Cgu/Can_colobus-Hla_gibbon	SE_WARN	se_dS: codeml=0.01785 kaks=0.021287; se_kappa: codeml=1.25683 kaks=1.499488; se_omega: codeml=0.61826 kaks=0.792651
+lysozymeSmall_moldmito	ml_cf2	Cgu/Can_colobus-Hsa_Human	SE_WARN	se_kappa: codeml=1.49014 kaks=1.258052
+lysozymeSmall_moldmito	ml_cf3	Cgu/Can_colobus-Hla_gibbon	SE_WARN	se_dS: codeml=0.01983 kaks=0.023968; se_kappa: codeml=1.15662 kaks=1.385892; se_omega: codeml=0.56746 kaks=0.73854
+lysozymeSmall_moldmito	ml_cf3	Cja_marmoset-Cgu/Can_colobus	SE_WARN	se_kappa: codeml=1.7393 kaks=2.014179
+lysozymeSmall_moldmito	summary	7 seqs	105 comparisons	0 failures
+lysozymeSmall_invertmito	ml_cf0	Cgu/Can_colobus-Hsa_Human	SE_WARN	se_omega: codeml=0.9379 kaks=1.083354
+lysozymeSmall_invertmito	ml_cf2	Cgu/Can_colobus-Hsa_Human	SE_WARN	se_kappa: codeml=1.58167 kaks=1.298014
+lysozymeSmall_invertmito	ml_cf2	Cgu/Can_colobus-Hla_gibbon	SE_WARN	se_dS: codeml=0.01598 kaks=0.019968; se_kappa: codeml=1.08108 kaks=1.376635; se_omega: codeml=0.83649 kaks=1.11711
+lysozymeSmall_invertmito	ml_cf3	Cgu/Can_colobus-Hsa_Human	SE_WARN	se_dS: codeml=0.01698 kaks=0.020303; se_omega: codeml=0.91394 kaks=1.142912
+lysozymeSmall_invertmito	summary	7 seqs	105 comparisons	0 failures
+lysozymeSmall_ciliate	ml_cf0	Cgu/Can_colobus-Hsa_Human	SE_WARN	se_kappa: codeml=1.69557 kaks=1.346457; se_omega: codeml=0.89306 kaks=0.736459
+lysozymeSmall_ciliate	ml_cf0	Cja_marmoset-Cgu/Can_colobus	SE_WARN	se_kappa: codeml=1.46811 kaks=1.809459
+lysozymeSmall_ciliate	ml_cf1	Cgu/Can_colobus-Hsa_Human	SE_WARN	se_kappa: codeml=1.19305 kaks=1.850556; se_omega: codeml=0.71812 kaks=0.849701
+lysozymeSmall_ciliate	ml_cf1	Cgu/Can_colobus-Hla_gibbon	SE_WARN	se_dS: codeml=0.01966 kaks=0.022732; se_kappa: codeml=1.18572 kaks=1.526094; se_omega: codeml=0.66083 kaks=0.81349
+lysozymeSmall_ciliate	ml_cf2	Cgu/Can_colobus-Hla_gibbon	SE_WARN	se_dS: codeml=0.02104 kaks=0.024208; se_omega: codeml=0.602 kaks=0.721917
+lysozymeSmall_ciliate	ml_cf3	Cgu/Can_colobus-Hsa_Human	SE_WARN	se_kappa: codeml=1.25282 kaks=1.607407
+lysozymeSmall_ciliate	ml_cf3	Cgu/Can_colobus-Hla_gibbon	SE_WARN	se_kappa: codeml=1.27038 kaks=1.495099
+lysozymeSmall_ciliate	summary	7 seqs	105 comparisons	0 failures
+lysozymeSmall_echinoderm	ml_cf0	Cgu/Can_colobus-Hla_gibbon	SE_WARN	se_kappa: codeml=1.19215 kaks=1.48053; se_omega: codeml=0.98709 kaks=1.143326
+lysozymeSmall_echinoderm	ml_cf0	Ssc_squirrelM-Pne_langur	SE_WARN	se_kappa: codeml=1.851 kaks=2.161872
+lysozymeSmall_echinoderm	ml_cf1	Cgu/Can_colobus-Hsa_Human	SE_WARN	se_dS: codeml=0.02907 kaks=0.017813; se_kappa: codeml=1.94387 kaks=1.360945; se_omega: codeml=1.8976 kaks=1.066607
+lysozymeSmall_echinoderm	ml_cf1	Cgu/Can_colobus-Hla_gibbon	SE_WARN	se_dS: codeml=0.0151 kaks=0.017423; se_kappa: codeml=0.92243 kaks=1.278876; se_omega: codeml=0.84966 kaks=1.02989
+lysozymeSmall_echinoderm	ml_cf2	Cgu/Can_colobus-Hla_gibbon	SE_WARN	se_kappa: codeml=1.1164 kaks=1.39552
+lysozymeSmall_echinoderm	ml_cf3	Cgu/Can_colobus-Hsa_Human	SE_WARN	se_kappa: codeml=1.19441 kaks=1.453047
+lysozymeSmall_echinoderm	summary	7 seqs	105 comparisons	0 failures
+lysozymeSmall_euplotid	ml_cf0	Cgu/Can_colobus-Hsa_Human	SE_WARN	se_dS: codeml=0.01883 kaks=0.021905; se_kappa: codeml=1.16665 kaks=1.529351; se_omega: codeml=0.63492 kaks=0.77679
+lysozymeSmall_euplotid	ml_cf0	Cgu/Can_colobus-Hla_gibbon	SE_WARN	se_dS: codeml=0.01889 kaks=0.024688; se_kappa: codeml=1.23605 kaks=1.657; se_omega: codeml=0.63537 kaks=0.897564
+lysozymeSmall_euplotid	ml_cf0	Cja_marmoset-Pne_langur	SE_WARN	se_kappa: codeml=2.8371 kaks=2.280511
+lysozymeSmall_euplotid	ml_cf1	Cgu/Can_colobus-Hsa_Human	SE_WARN	se_omega: codeml=0.69932 kaks=0.829446
+lysozymeSmall_euplotid	ml_cf1	Cgu/Can_colobus-Hla_gibbon	SE_WARN	se_kappa: codeml=1.12292 kaks=1.430728; se_omega: codeml=0.67634 kaks=0.808775
+lysozymeSmall_euplotid	ml_cf1	Cja_marmoset-Pne_langur	SE_WARN	se_kappa: codeml=2.22954 kaks=2.609377
+lysozymeSmall_euplotid	ml_cf2	Cgu/Can_colobus-Hsa_Human	SE_WARN	se_dS: codeml=0.028 kaks=0.023292; se_kappa: codeml=1.51579 kaks=1.266993; se_omega: codeml=0.87111 kaks=0.685609
+lysozymeSmall_euplotid	ml_cf2	Cgu/Can_colobus-Hla_gibbon	SE_WARN	se_dS: codeml=0.02147 kaks=0.026827; se_kappa: codeml=1.13003 kaks=1.431425; se_omega: codeml=0.61323 kaks=0.819861
+lysozymeSmall_euplotid	ml_cf3	Cgu/Can_colobus-Hsa_Human	SE_WARN	se_omega: codeml=0.63254 kaks=0.728751
+lysozymeSmall_euplotid	ml_cf3	Cgu/Can_colobus-Hla_gibbon	SE_WARN	se_dS: codeml=0.03176 kaks=0.024932; se_kappa: codeml=1.77656 kaks=1.490846; se_omega: codeml=1.04409 kaks=0.774814
+lysozymeSmall_euplotid	summary	7 seqs	105 comparisons	0 failures
+lysozymeSmall_altyeast	ml_cf0	Cgu/Can_colobus-Hsa_Human	SE_WARN	se_omega: codeml=0.53714 kaks=0.65467
+lysozymeSmall_altyeast	ml_cf0	Ssc_squirrelM-Pne_langur	SE_WARN	se_kappa: codeml=1.63137 kaks=1.912498
+lysozymeSmall_altyeast	ml_cf0	Cja_marmoset-Cgu/Can_colobus	SE_WARN	se_kappa: codeml=1.47861 kaks=1.799889
+lysozymeSmall_altyeast	ml_cf1	Cja_marmoset-Cgu/Can_colobus	SE_WARN	se_kappa: codeml=1.51689 kaks=1.853404
+lysozymeSmall_altyeast	ml_cf3	Cgu/Can_colobus-Hsa_Human	SE_WARN	se_dS: codeml=0.02189 kaks=0.028227; se_kappa: codeml=1.15994 kaks=1.482356; se_omega: codeml=0.52848 kaks=0.741392
+lysozymeSmall_altyeast	ml_cf3	Cgu/Can_colobus-Hla_gibbon	SE_WARN	se_kappa: codeml=1.07521 kaks=1.376216; se_omega: codeml=0.56502 kaks=0.673252
+lysozymeSmall_altyeast	ml_cf3	Cja_marmoset-Pne_langur	SE_WARN	se_kappa: codeml=2.33199 kaks=2.72225
+lysozymeSmall_altyeast	summary	7 seqs	105 comparisons	0 failures
+lysozymeSmall_ascidian	ml_cf0	Cgu/Can_colobus-Hsa_Human	SE_WARN	se_omega: codeml=0.89394 kaks=1.067106
+lysozymeSmall_ascidian	ml_cf0	Cgu/Can_colobus-Hla_gibbon	SE_WARN	se_kappa: codeml=1.38294 kaks=1.622109
+lysozymeSmall_ascidian	ml_cf1	Cja_marmoset-Cgu/Can_colobus	SE_WARN	se_kappa: codeml=1.74001 kaks=2.098996
+lysozymeSmall_ascidian	ml_cf2	Cgu/Can_colobus-Hsa_Human	SE_WARN	se_dS: codeml=0.01693 kaks=0.0205; se_omega: codeml=0.87664 kaks=1.129276
+lysozymeSmall_ascidian	ml_cf2	Cgu/Can_colobus-Hla_gibbon	SE_WARN	se_kappa: codeml=1.19856 kaks=1.574066
+lysozymeSmall_ascidian	ml_cf2	Cja_marmoset-Cgu/Can_colobus	SE_WARN	se_kappa: codeml=1.71913 kaks=1.977375
+lysozymeSmall_ascidian	ml_cf3	Cgu/Can_colobus-Hsa_Human	SE_WARN	se_dS: codeml=0.01672 kaks=0.022034; se_omega: codeml=0.89948 kaks=1.264384
+lysozymeSmall_ascidian	ml_cf3	Cgu/Can_colobus-Hla_gibbon	SE_WARN	se_kappa: codeml=1.92583 kaks=1.542839
+lysozymeSmall_ascidian	summary	7 seqs	105 comparisons	0 failures
+lysozymeSmall_blepharisma	ml_cf0	Cgu/Can_colobus-Hla_gibbon	SE_WARN	se_dS: codeml=0.01868 kaks=0.021662; se_omega: codeml=0.60444 kaks=0.74034
+lysozymeSmall_blepharisma	ml_cf0	Cja_marmoset-Pne_langur	SE_WARN	se_kappa: codeml=2.24417 kaks=2.620623
+lysozymeSmall_blepharisma	ml_cf1	Cgu/Can_colobus-Hsa_Human	SE_WARN	se_dN: codeml=0.02073 kaks=0.017463; se_dS: codeml=0.03431 kaks=0.020755; se_kappa: codeml=1.66232 kaks=1.298302; se_omega: codeml=1.26445 kaks=0.691792
+lysozymeSmall_blepharisma	ml_cf3	Cja_marmoset-Pne_langur	SE_WARN	se_kappa: codeml=2.30395 kaks=2.718055
+lysozymeSmall_blepharisma	summary	7 seqs	105 comparisons	0 failures
+abglobin_yeastmito	ml_cf3	marsupial-goat-cow	SE_WARN	se_dN: codeml=0.02428 kaks=0.020328
+abglobin_yeastmito	ml_cf3	marsupial-rabbit	SE_WARN	se_dN: codeml=0.02605 kaks=0.020915
+abglobin_yeastmito	summary	5 seqs	50 comparisons	0 failures

@@ -3,7 +3,21 @@
 A single self-contained binary that estimates dN/dS (Ka/Ks) from coding
 sequences. It reimplements the numerical core of the `yn00_cds_optimal` and
 `yn00_cds_prealigned` C tools with command-line flags only, no control files,
-and a choice of output formats.
+and a choice of output formats, and adds the pairwise maximum-likelihood
+estimate of PAML `codeml` (`runmode = -2`).
+
+Estimators:
+
+| `--method` | What it is | PAML equivalent |
+|---|---|---|
+| `yn00` (default) | Yang & Nielsen 2000 counting method, single pass, equal path weighting | `yn00` with `weighting = 0` |
+| `ng86` | Nei & Gojobori 1986 | `yn00` output section A |
+| `ml` | Goldman & Yang 1994 codon model, t / kappa / omega by maximum likelihood, S.E. by the curvature of the likelihood | `codeml` with `runmode = -2`, `model = 0`, `NSsites = 0` |
+| `both` | yn00 + ng86 | |
+| `all` | yn00 + ng86 + ml | |
+
+Only pairwise estimation is implemented. There is no tree-based likelihood,
+no site or branch models, and no NSsites tests; for those use `codeml`.
 
 * takes **all** configuration from command-line flags
 * embeds BLOSUM62 and all 27 NCBI genetic codes (`gc.prt` 4.6), so nothing
@@ -55,6 +69,10 @@ kaks --prealigned input.cds.aln
 # Nei-Gojobori 1986 as well as Yang-Nielsen 2000, as a readable table
 kaks --method both --format table input.cds.fasta
 
+# Maximum likelihood (codeml pairwise), F3x4 codon frequencies
+kaks --method ml --prealigned input.cds.aln
+kaks --method all --codon-freq fcodon --prealigned input.cds.aln
+
 # JSON, reading from stdin, written to a file
 cat input.cds.fasta | kaks --format json -o result.json -
 
@@ -75,7 +93,9 @@ kaks --list-codes
 | `--prealigned` | off | Treat input as an in-frame codon alignment |
 | `--informat {fasta,phylip}` | auto | Input format (auto-detected otherwise) |
 | `--format {tsv,table,json}` | `tsv` | Output format |
-| `--method {yn00,ng86,both}` | `yn00` | Estimator(s) to report |
+| `--method {yn00,ng86,ml,both,all}` | `yn00` | Estimator(s) to report (see table above) |
+| `--codon-freq {fequal,f1x4,f3x4,fcodon}` | `f3x4` | Equilibrium codon frequencies for `--method ml` (codeml `CodonFreq` 0-3) |
+| `--common-f3x4` | off | yn00: pool F3x4 frequencies over all sequences (PAML `commonf3x4 = 1`, the C tools' behaviour) instead of per pair |
 | `--genetic-code ID` | `1` | NCBI translation table id (`transl_table`): any of the 27 NCBI tables, e.g. 1 standard, 2 vertebrate mito, 3 yeast mito, 4 mold/protozoan mito, 5 invertebrate mito, 6 ciliate, 11 bacterial/plastid |
 | `--list-codes` | | Print all supported genetic codes (id and name) and exit |
 | `--aln-mode {global,local}` | `global` | Protein aligner mode for the from-CDS path |
@@ -96,7 +116,10 @@ kaks --list-codes
 
 `SEQ1 SEQ2 dN dS OMEGA N S kappa t LENGTH`, plus `SE_dN SE_dS` and the NG86
 columns `NG_dN NG_dS NG_omega` when `--method both`. `LENGTH` is the codon
-alignment length in nucleotides.
+alignment length in nucleotides. With `--method ml` the same columns hold the
+ML values plus `lnL SE_dN SE_dS`; with `--method all` they are prefixed
+`ML_`. JSON output also carries `ML_SE_t`, `ML_SE_kappa`, `ML_SE_omega`,
+`ML_converged` and `ML_nfun` (likelihood evaluations).
 
 Example (bundled test pair):
 
@@ -110,11 +133,19 @@ F35G8.1  CBG16160  0.066778  1.472123  0.045362  832.180782  289.819218  1.56488
 `--genetic-code` takes the NCBI translation-table id used in GenBank
 `transl_table` qualifiers. All 27 tables in NCBI `gc.prt` version 4.6 are
 embedded (1-6, 9-16, 21-33); `kaks --list-codes` prints them. The default is 1
-(standard). Note for users of the C tools or PAML: PAML numbers its six codes
-0-5, and its yeast-mitochondrial table keeps TGA as a stop, whereas NCBI
-table 3 translates TGA as Trp. `kaks` follows NCBI.
+(standard). Note for users of the C tools: PAML numbers its codes 0-10
+(`icode`), which map to NCBI ids 1, 2, 3, 4, 5, 6, 9, 10, 12, 13, 15; current
+PAML 4.10 tables are identical to NCBI's. The 2004 PAML copy bundled in `src/`
+keeps TGA as a stop in its yeast-mitochondrial table, whereas NCBI table 3
+translates TGA as Trp. `kaks` follows NCBI.
 
-## Validation
+## Validation against PAML
+
+`../../tst/paml_compare/compare_paml.py` runs PAML `codeml` (pairwise, all
+four `CodonFreq` models, `getSE = 1`) and `yn00` next to `kaks` on PAML's own
+example alignments under eleven genetic codes and compares every pair. See
+`../../tst/paml_compare/README.md` for the datasets, tolerances and the
+current result.
 
 The **prealigned** path reproduces the C `yn00_cds_prealigned` output
 byte-for-byte (dN, dS, ω, N, S, κ, t and alignment length) on the bundled
