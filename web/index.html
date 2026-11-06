@@ -46,12 +46,26 @@
   button:disabled { opacity: .5; cursor: default; }
   .status { color: var(--muted); font-size: .9rem; }
   .error { color: var(--err); white-space: pre-wrap; font-family: var(--mono); font-size: .9rem; }
-  .tablewrap { overflow-x: auto; border: 1px solid var(--line); border-radius: 6px; }
-  table { border-collapse: collapse; width: 100%; font-size: .9rem; }
-  th, td { padding: 6px 10px; border-bottom: 1px solid var(--line); text-align: right; white-space: nowrap; font-family: var(--mono); }
-  th { position: sticky; top: 0; background: var(--panel); }
+  .tablewrap { overflow: auto; max-height: 420px; border: 1px solid var(--line); border-radius: 6px; }
+  table { border-collapse: collapse; width: 100%; font-size: .74rem; }
+  th, td { padding: 2px 7px; border-bottom: 1px solid var(--line); text-align: right; white-space: nowrap; font-family: var(--mono); line-height: 1.35; }
+  th { position: sticky; top: 0; background: var(--panel); z-index: 1; font-weight: 600; }
+  tbody tr:nth-child(even) { background: color-mix(in srgb, var(--panel) 60%, var(--bg)); }
+  tbody tr:hover { background: color-mix(in srgb, var(--accent) 12%, var(--bg)); }
+  #raw { font-size: .72rem; max-height: 300px; margin: 6px 0 0; }
   td:first-child, td:nth-child(2), td:nth-child(3), th:first-child, th:nth-child(2), th:nth-child(3) { text-align: left; }
   pre { background: var(--panel); border: 1px solid var(--line); border-radius: 6px; padding: 10px; overflow-x: auto; font-size: .85rem; }
+  .figs { display: grid; grid-template-columns: repeat(auto-fit, minmax(340px, 1fr)); gap: 12px; margin-top: 8px; }
+  .fig { border: 1px solid var(--line); border-radius: 6px; padding: 6px; background: #fff; }
+  .fig svg { width: 100%; height: auto; display: block; }
+  .fig .sum { font: 11px/1.4 var(--mono); color: #333; margin: 4px 2px 0; white-space: pre-wrap; }
+  .fig .fb { display: flex; gap: 6px; margin-top: 4px; }
+  .fig .fb button { padding: 2px 8px; font-size: .8rem; }
+  .ctl { display: flex; flex-wrap: wrap; gap: 10px 16px; align-items: center; margin: 8px 0; }
+  .ctl label { margin: 0; gap: 6px; }
+  .ctl input[type=number] { width: 70px; }
+  input[type=password], input[type=text], textarea.small { font: inherit; padding: 4px 6px; border: 1px solid var(--line); border-radius: 4px; background: var(--bg); color: var(--fg); }
+  #vega { min-height: 40px; background: #fff; border: 1px solid var(--line); border-radius: 6px; padding: 6px; overflow-x: auto; }
   details { margin-top: 20px; color: var(--muted); }
   summary { cursor: pointer; color: var(--fg); }
   a { color: var(--accent); }
@@ -82,6 +96,56 @@ ATG..."></textarea>
       </div>
       <div class="error" id="error"></div>
       <div class="tablewrap" id="tablewrap" hidden><table id="table"></table></div>
+      <details id="rawbox" hidden><summary class="status">Raw TSV output</summary><pre id="raw"></pre></details>
+
+      <section id="plots" hidden>
+        <h2 style="font-size:1.15rem;margin:20px 0 4px">Plots</h2>
+        <div class="ctl">
+          <label><span>Estimates</span><select id="p-src"></select></label>
+          <label><span>Colour by</span>
+            <select id="p-color"><option value="none">none</option><option value="file" selected>file</option><option value="code">genetic code</option></select></label>
+          <label><span>Axis</span>
+            <select id="p-scale"><option value="lin" selected>linear</option><option value="log">log10</option></select></label>
+          <label><span>Bins</span><input type="number" id="p-bins" value="20" min="2" max="200"></label>
+          <label><span>x range</span><input type="number" id="p-xmin" step="any" placeholder="min"> <input type="number" id="p-xmax" step="any" placeholder="max"></label>
+        </div>
+        <div class="ctl">
+          <span style="color:var(--muted)">Filter:</span>
+          <label><span>drop dS &gt;</span><input type="number" id="p-dsmax" value="2" step="any" min="0"></label>
+          <label><span>drop dN/dS &gt;</span><input type="number" id="p-wmax" step="any" min="0" placeholder="off"></label>
+          <label><span>drop outliers beyond IQR x</span><input type="number" id="p-iqr" step="any" min="0" placeholder="off"></label>
+          <button id="p-dl-tsv">Download filtered TSV</button>
+          <span class="status" id="p-status"></span>
+        </div>
+        <div class="figs">
+          <div class="fig"><div id="fig-dN"></div><div class="sum" id="sum-dN"></div><div class="fb"><button data-fig="dN" data-kind="svg">SVG</button><button data-fig="dN" data-kind="png">PNG</button></div></div>
+          <div class="fig"><div id="fig-dS"></div><div class="sum" id="sum-dS"></div><div class="fb"><button data-fig="dS" data-kind="svg">SVG</button><button data-fig="dS" data-kind="png">PNG</button></div></div>
+          <div class="fig"><div id="fig-omega"></div><div class="sum" id="sum-omega"></div><div class="fb"><button data-fig="omega" data-kind="svg">SVG</button><button data-fig="omega" data-kind="png">PNG</button></div></div>
+          <div class="fig"><div id="fig-scatter"></div><div class="sum" id="sum-scatter"></div><div class="fb"><button data-fig="scatter" data-kind="svg">SVG</button><button data-fig="scatter" data-kind="png">PNG</button></div></div>
+        </div>
+
+        <details id="ai" style="margin-top:14px;color:var(--fg)">
+          <summary>Ask a model for a plot (optional; needs your own API key)</summary>
+          <p class="status" style="margin:6px 0">Your key stays in this page's memory only and is never stored. The request goes from your browser straight to the provider you choose. What is sent: the result table's column names, five sample rows, summary statistics and your request text. Sequences are never sent. The model returns a Vega-Lite chart specification which is rendered here; you can edit the specification and re-render it.</p>
+          <div class="ctl">
+            <label><span>Provider</span><select id="ai-provider"></select></label>
+            <label><span>Model</span><input type="text" id="ai-model" size="22"></label>
+            <label style="flex:1 1 320px"><span>Endpoint</span><input type="text" id="ai-endpoint" style="flex:1;max-width:none"></label>
+            <label><span>API key</span><input type="password" id="ai-key" size="28" autocomplete="off"></label>
+          </div>
+          <textarea id="ai-prompt" class="small" style="width:100%;min-height:56px" placeholder="e.g. scatter dN against dS, colour by file, log axes, drop pairs with dS above 3; or: boxplot of omega per file"></textarea>
+          <div class="row">
+            <button class="primary" id="ai-ask">Ask</button>
+            <button id="ai-render">Render edited spec</button>
+            <span class="status" id="ai-status"></span>
+          </div>
+          <div class="error" id="ai-error"></div>
+          <div id="vega"></div>
+          <details style="margin-top:8px"><summary>Vega-Lite specification (editable)</summary>
+            <textarea id="ai-spec" class="small" style="width:100%;min-height:160px;font-family:var(--mono);font-size:12px" spellcheck="false"></textarea></details>
+          <div class="status" id="ai-history"></div>
+        </details>
+      </section>
     </section>
 
     <aside>
@@ -138,6 +202,8 @@ ATG..."></textarea>
 
 <script type="module">
   import init, { kaks_run, kaks_codes, kaks_version } from "./pkg/subopt_kaks.js";
+  import { buildPlots, availableSources, SOURCES } from "./plots.js";
+  import { PROVIDERS, askForSpec, renderSpec } from "./ai.js";
 
   const $ = (id) => document.getElementById(id);
   const status = $("status"), errBox = $("error"), runBtn = $("run");
@@ -222,7 +288,7 @@ ATGAACGCCGACGCAAACCTGACGGATTTTCAGTGCGAGTATCCATCGATTGATCTCACTTTTCAAATTAAGCTTTTACT
         const lines = tsv.trim().split("\n");
         header ??= lines[0].split("\t");
         lines.slice(1).forEach((l) => tsvRows.push([jobs[i].name, ...l.split("\t")]));
-        JSON.parse(kaks_run(...opts(text, "json"))).forEach((r) => jsonRows.push({ file: jobs[i].name, ...r }));
+        JSON.parse(kaks_run(...opts(text, "json"))).forEach((r) => jsonRows.push({ file: jobs[i].name, genetic_code: Number($("code").value), ...r }));
         npairs += lines.length - 1;
       } catch (e) {
         errors.push(`${jobs[i].name}: ${e && e.message ? e.message : e}`);
@@ -235,11 +301,107 @@ ATGAACGCCGACGCAAACCTGACGGATTTTCAGTGCGAGTATCCATCGATTGATCTCACTTTTCAAATTAAGCTTTTACT
     lastTsv = [cols.join("\t"), ...tsvRows.map((r) => r.join("\t"))].join("\n") + "\n";
     lastJson = JSON.stringify(jsonRows, null, 1);
     renderTable(lastTsv);
+    $("raw").textContent = lastTsv; $("rawbox").hidden = false;
     const secs = ((performance.now() - t0) / 1000).toFixed(2);
     status.textContent = `${npairs} pair${npairs === 1 ? "" : "s"} from ${jobs.length} file${jobs.length === 1 ? "" : "s"} in ${secs} s` +
       (errors.length ? `, ${errors.length} failed` : "");
     $("dl-tsv").disabled = $("dl-json").disabled = false;
+    lastRows = jsonRows;
+    setupPlots();
   }
+
+  // ---------------- built-in plots ----------------
+  let lastRows = [];
+  let lastPlots = null;
+  const num = (id) => { const v = $(id).value.trim(); return v === "" ? null : Number(v); };
+  function plotState() {
+    return {
+      src: $("p-src").value, colorBy: $("p-color").value, log: $("p-scale").value === "log",
+      bins: Math.max(2, Math.min(200, Number($("p-bins").value) || 20)),
+      xmin: num("p-xmin"), xmax: num("p-xmax"), dsMax: num("p-dsmax"), omegaMax: num("p-wmax"), iqrK: num("p-iqr"),
+    };
+  }
+  function setupPlots() {
+    const srcs = availableSources(lastRows);
+    const sel = $("p-src");
+    const prev = sel.value;
+    sel.innerHTML = "";
+    srcs.forEach((k) => { const o = document.createElement("option"); o.value = k; o.textContent = SOURCES[k].label; sel.appendChild(o); });
+    if (srcs.includes(prev)) sel.value = prev;
+    $("plots").hidden = lastRows.length < 2 || !srcs.length;
+    if (!$("plots").hidden) updatePlots();
+  }
+  function updatePlots() {
+    if (!lastRows.length) return;
+    lastPlots = buildPlots(lastRows, plotState());
+    for (const k of ["dN", "dS", "omega", "scatter"]) $("fig-" + k).innerHTML = lastPlots.svgs[k];
+    for (const k of ["dN", "dS", "omega"]) $("sum-" + k).textContent = lastPlots.summaries[k];
+    const r = lastPlots.reasons;
+    $("sum-scatter").textContent = `${lastPlots.kept.length} pairs shown`;
+    $("p-status").textContent = `${lastPlots.kept.length} of ${lastRows.length} pairs kept` +
+      (lastPlots.dropped ? ` (removed: ${r.nonfinite} undefined, ${r.dsMax} dS cutoff, ${r.omegaMax} dN/dS cutoff, ${r.iqr} IQR)` : "");
+  }
+  ["p-src", "p-color", "p-scale", "p-bins", "p-xmin", "p-xmax", "p-dsmax", "p-wmax", "p-iqr"].forEach((id) =>
+    $(id).addEventListener("input", updatePlots));
+  $("p-dl-tsv").addEventListener("click", () => {
+    if (!lastPlots) return;
+    const cols = Object.keys(lastPlots.kept[0] || {});
+    const tsv = [cols.join("\t"), ...lastPlots.kept.map((r) => cols.map((c) => r[c]).join("\t"))].join("\n") + "\n";
+    download("kaks-filtered.tsv", tsv, "text/tab-separated-values");
+  });
+  document.querySelectorAll(".fb button").forEach((b) => b.addEventListener("click", async () => {
+    if (!lastPlots) return;
+    const svg = lastPlots.svgs[b.dataset.fig];
+    if (b.dataset.kind === "svg") { download(`kaks-${b.dataset.fig}.svg`, svg, "image/svg+xml"); return; }
+    const img = new Image();
+    const url = URL.createObjectURL(new Blob([svg], { type: "image/svg+xml" }));
+    img.onload = () => {
+      const c = document.createElement("canvas");
+      c.width = img.width * 2; c.height = img.height * 2;
+      c.getContext("2d").drawImage(img, 0, 0, c.width, c.height);
+      c.toBlob((blob) => { const a = document.createElement("a"); a.href = URL.createObjectURL(blob); a.download = `kaks-${b.dataset.fig}.png`; a.click(); });
+      URL.revokeObjectURL(url);
+    };
+    img.src = url;
+  }));
+
+  // ---------------- optional model-written plots ----------------
+  const history = [];
+  const prov = $("ai-provider");
+  Object.entries(PROVIDERS).forEach(([k, v]) => { const o = document.createElement("option"); o.value = k; o.textContent = v.label; prov.appendChild(o); });
+  const applyProvider = () => { $("ai-endpoint").value = PROVIDERS[prov.value].endpoint; $("ai-model").value = PROVIDERS[prov.value].model; };
+  prov.addEventListener("change", applyProvider);
+  applyProvider();
+  async function renderCurrentSpec() {
+    $("ai-error").textContent = "";
+    let spec;
+    try { spec = JSON.parse($("ai-spec").value); } catch (e) { $("ai-error").textContent = "the specification is not valid JSON: " + e.message; return; }
+    try {
+      $("ai-status").textContent = "rendering…";
+      await renderSpec($("vega"), spec, lastPlots ? lastPlots.kept : lastRows);
+      $("ai-status").textContent = `rendered with ${lastPlots ? lastPlots.kept.length : lastRows.length} rows (the filters above apply)`;
+    } catch (e) { $("ai-status").textContent = ""; $("ai-error").textContent = String(e && e.message ? e.message : e); }
+  }
+  $("ai-ask").addEventListener("click", async () => {
+    $("ai-error").textContent = "";
+    const text = $("ai-prompt").value.trim();
+    if (!text) { $("ai-error").textContent = "describe the plot you want"; return; }
+    $("ai-ask").disabled = true;
+    $("ai-status").textContent = "asking the model…";
+    try {
+      const rows = lastPlots ? lastPlots.kept : lastRows;
+      const prevSpec = $("ai-spec").value.trim() || null;
+      const spec = await askForSpec(prov.value, { endpoint: $("ai-endpoint").value.trim(), key: $("ai-key").value, model: $("ai-model").value.trim() }, text, rows, prevSpec);
+      $("ai-spec").value = JSON.stringify(spec, null, 2);
+      history.unshift(text); history.splice(5);
+      $("ai-history").textContent = "recent: " + history.join(" | ");
+      await renderCurrentSpec();
+    } catch (e) {
+      $("ai-status").textContent = "";
+      $("ai-error").textContent = String(e && e.message ? e.message : e);
+    } finally { $("ai-ask").disabled = false; }
+  });
+  $("ai-render").addEventListener("click", renderCurrentSpec);
 
   function showFiles() {
     $("filelist").textContent = files.length
@@ -254,7 +416,7 @@ ATGAACGCCGACGCAAACCTGACGGATTTTCAGTGCGAGTATCCATCGATTGATCTCACTTTTCAAATTAAGCTTTTACT
     if (files.length === 1) { $("input").value = await files[0].text(); files = []; $("file").value = ""; showFiles(); }
   });
   $("example").addEventListener("click", () => { $("input").value = EXAMPLE; $("prealigned").checked = false; files = []; $("file").value = ""; showFiles(); });
-  $("clear").addEventListener("click", () => { $("input").value = ""; files = []; $("file").value = ""; showFiles(); setError(""); $("tablewrap").hidden = true; status.textContent = "ready"; });
+  $("clear").addEventListener("click", () => { $("input").value = ""; files = []; $("file").value = ""; showFiles(); setError(""); $("tablewrap").hidden = true; $("rawbox").hidden = true; $("plots").hidden = true; lastRows = []; lastPlots = null; status.textContent = "ready"; });
   $("run").addEventListener("click", run);
   $("dl-tsv").addEventListener("click", () => download("kaks.tsv", lastTsv, "text/tab-separated-values"));
   $("dl-json").addEventListener("click", () => download("kaks.json", lastJson, "application/json"));

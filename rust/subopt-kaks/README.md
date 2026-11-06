@@ -67,7 +67,18 @@ Two builds, no code changes needed for either:
   `../../web/index.html` is a self-contained page: paste sequences or choose
   any number of alignment files, pick method, genetic code and codon
   frequencies, run, and download one TSV/JSON table with a `FILE` column
-  (live at https://hyphaltip.github.io/subopt-kaks/). Serve
+  (live at https://hyphaltip.github.io/subopt-kaks/). With two or more pairs
+  it draws histograms of dN, dS and dN/dS and a dN-vs-dS scatter
+  (`web/plots.js`, no third-party code) with colour by file or genetic code,
+  linear or log axes, bin count, x-range, and outlier filters (dS cutoff,
+  dN/dS cutoff, IQR rule), each downloadable as SVG or PNG together with the
+  filtered table. An optional panel (`web/ai.js`) sends the result table's
+  column names, five sample rows and summary statistics, never sequences, to
+  an OpenAI-compatible or Gemini endpoint with the user's own key (kept in
+  memory only) and renders the Vega-Lite chart the model returns; the
+  specification is editable. Vega libraries load from cdnjs only when that
+  panel is used. `node web/test_plots.mjs` tests the plotting and request
+  helpers. Serve
   the `web/` directory over HTTP, for example `make -C ../.. serve-web`, then
   open http://localhost:8000. Nothing is uploaded; all computation is local.
   `.github/workflows/pages.yml` publishes it with GitHub Pages once Pages is

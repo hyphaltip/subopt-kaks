@@ -38,6 +38,7 @@ build $(TARGET):
 test: build
 	$(CARGO) test --release
 	$(TST)/run_tests.sh --rust $(abspath target/release)
+	cd $(WEB) && node test_plots.mjs
 
 install: build
 	$(INSTALL) -d $(DESTDIR)$(BINDIR)
