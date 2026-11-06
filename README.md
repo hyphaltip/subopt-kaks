@@ -166,6 +166,14 @@ adequate credit to the code it reuses. Please contact me if you have
 questions or intend to use this for large-scale analyses so I can be sure
 it is performing properly for you.
 
+## License
+
+GNU General Public License v3.0 or later (see `LICENSE`). The dN/dS
+estimators are derived from Ziheng Yang's PAML (`src/tools.c`,
+`src/yn00_simple.c`; `rust/subopt-kaks/src/ml.rs` and `optim.rs` port
+`codeml` and `ming2`), which is GPL v3. The bundled SQUID library
+(`squid/`) is Sean Eddy's, GPL v2 or later.
+
 ## Changes
 
 See `Changelog`.

@@ -211,3 +211,9 @@ The **from-CDS** path uses a Gotoh affine-gap protein aligner, not the Zuker
 suboptimal aligner of the C `*zuker*` tools. On the bundled pair it gives the
 same alignment and the same estimates as `yn00_cds_optimal`. The Zuker
 suboptimal-alignment tools exist only in C.
+
+## License
+
+GNU General Public License v3.0 or later. `ml.rs` and `optim.rs` are ports of
+PAML's `codeml` pairwise routine and `ming2` optimizer (Ziheng Yang, GPL v3);
+`estimate.rs` ports `yn00`.
