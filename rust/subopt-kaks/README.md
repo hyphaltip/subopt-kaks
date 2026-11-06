@@ -75,10 +75,11 @@ Two builds, no code changes needed for either:
 
 `make web` needs `wasm-bindgen-cli` at the same version as the `wasm-bindgen`
 crate in `Cargo.lock` (`cargo install wasm-bindgen-cli --version 0.2.130`).
-The browser build was checked under Node against the native binary on the
-bundled pair: lnL, t, kappa, omega, dN and dS are identical; N, S and SE(dS)
-differ in the sixth decimal because the wasm math library rounds `exp`/`log`
-slightly differently.
+The browser and musl builds were checked against the glibc binary on the
+bundled pairs: lnL, t, kappa, omega, dN and dS are identical; the ML standard
+errors (and N, S in the wasm build) can differ in the fifth or sixth decimal
+because each platform's math library rounds `exp`/`log` slightly differently
+and the finite-difference Hessian amplifies that.
 
 The library crate (`subopt_kaks`) can also be used directly from Rust:
 `subopt_kaks::analyze(text, &Options)` returns one `PairResult` per pair and
