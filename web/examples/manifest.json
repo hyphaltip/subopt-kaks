@@ -1,0 +1,82 @@
+[
+ {
+  "file": "lysozyme_Hsa_Human_Hla_gibbon.fasta",
+  "source": "PAML examples/lysozyme/lysozymeSmall.nuc (primate lysozyme, Messier & Stewart 1997)"
+ },
+ {
+  "file": "lysozyme_Hsa_Human_Cgu_Can_colobus.fasta",
+  "source": "PAML examples/lysozyme/lysozymeSmall.nuc (primate lysozyme, Messier & Stewart 1997)"
+ },
+ {
+  "file": "lysozyme_Hsa_Human_Pne_langur.fasta",
+  "source": "PAML examples/lysozyme/lysozymeSmall.nuc (primate lysozyme, Messier & Stewart 1997)"
+ },
+ {
+  "file": "lysozyme_Hsa_Human_Mmu_rhesus.fasta",
+  "source": "PAML examples/lysozyme/lysozymeSmall.nuc (primate lysozyme, Messier & Stewart 1997)"
+ },
+ {
+  "file": "lysozyme_Hsa_Human_Ssc_squirrelM.fasta",
+  "source": "PAML examples/lysozyme/lysozymeSmall.nuc (primate lysozyme, Messier & Stewart 1997)"
+ },
+ {
+  "file": "lysozyme_Hsa_Human_Cja_marmoset.fasta",
+  "source": "PAML examples/lysozyme/lysozymeSmall.nuc (primate lysozyme, Messier & Stewart 1997)"
+ },
+ {
+  "file": "lysozyme_Hla_gibbon_Cgu_Can_colobus.fasta",
+  "source": "PAML examples/lysozyme/lysozymeSmall.nuc (primate lysozyme, Messier & Stewart 1997)"
+ },
+ {
+  "file": "lysozyme_Hla_gibbon_Pne_langur.fasta",
+  "source": "PAML examples/lysozyme/lysozymeSmall.nuc (primate lysozyme, Messier & Stewart 1997)"
+ },
+ {
+  "file": "lysozyme_Hla_gibbon_Mmu_rhesus.fasta",
+  "source": "PAML examples/lysozyme/lysozymeSmall.nuc (primate lysozyme, Messier & Stewart 1997)"
+ },
+ {
+  "file": "lysozyme_Hla_gibbon_Ssc_squirrelM.fasta",
+  "source": "PAML examples/lysozyme/lysozymeSmall.nuc (primate lysozyme, Messier & Stewart 1997)"
+ },
+ {
+  "file": "globin_human_goat_cow.fasta",
+  "source": "PAML examples/abglobin.nuc (alpha/beta globin, Yang 1997)"
+ },
+ {
+  "file": "globin_human_rabbit.fasta",
+  "source": "PAML examples/abglobin.nuc (alpha/beta globin, Yang 1997)"
+ },
+ {
+  "file": "globin_human_rat.fasta",
+  "source": "PAML examples/abglobin.nuc (alpha/beta globin, Yang 1997)"
+ },
+ {
+  "file": "globin_human_marsupial.fasta",
+  "source": "PAML examples/abglobin.nuc (alpha/beta globin, Yang 1997)"
+ },
+ {
+  "file": "globin_goat_cow_rabbit.fasta",
+  "source": "PAML examples/abglobin.nuc (alpha/beta globin, Yang 1997)"
+ },
+ {
+  "file": "globin_goat_cow_rat.fasta",
+  "source": "PAML examples/abglobin.nuc (alpha/beta globin, Yang 1997)"
+ },
+ {
+  "file": "globin_goat_cow_marsupial.fasta",
+  "source": "PAML examples/abglobin.nuc (alpha/beta globin, Yang 1997)"
+ },
+ {
+  "file": "globin_rabbit_rat.fasta",
+  "source": "PAML examples/abglobin.nuc (alpha/beta globin, Yang 1997)"
+ },
+ {
+  "file": "globin_rabbit_marsupial.fasta",
+  "source": "PAML examples/abglobin.nuc (alpha/beta globin, Yang 1997)"
+ },
+ {
+  "file": "globin_rat_marsupial.fasta",
+  "source": "PAML examples/abglobin.nuc (alpha/beta globin, Yang 1997)"
+ }
+]

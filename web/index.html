@@ -8,23 +8,46 @@
 <script data-goatcounter="https://hyphaltip.goatcounter.com/count"
         async src="//gc.zgo.at/count.js"></script>
 <style>
+  /* Colour skins shared with the NovInvenio reports: light (default), dark,
+     paper, neuromancer. "Follow system" picks light or dark from the OS. */
   :root {
+    color-scheme: light;
     --bg: #ffffff; --fg: #1a1a1a; --muted: #5c6370; --line: #d8dde3;
     --panel: #f6f8fa; --accent: #1d4ed8; --accent-fg: #ffffff; --err: #b91c1c;
-    --mono: ui-monospace, SFMono-Regular, Menlo, Consolas, monospace;
+    --font: system-ui, -apple-system, "Segoe UI", Roboto, Helvetica, Arial, sans-serif;
+    --mono: ui-monospace, SFMono-Regular, Menlo, "DejaVu Sans Mono", Consolas, monospace;
+    --glow: none; --overlay: none;
   }
   @media (prefers-color-scheme: dark) {
-    :root:not([data-theme="light"]) {
-      --bg: #0f1419; --fg: #e6e9ee; --muted: #9aa4b2; --line: #2a323c;
-      --panel: #161c24; --accent: #60a5fa; --accent-fg: #0b1220; --err: #f87171;
+    :root:not([data-skin]) {
+      color-scheme: dark;
+      --bg: #0d0d0d; --fg: #ffffff; --muted: #898781; --line: #2c2c2a;
+      --panel: #1a1a19; --accent: #3987e5; --accent-fg: #ffffff; --err: #e0a030;
     }
   }
-  :root[data-theme="dark"] {
-    --bg: #0f1419; --fg: #e6e9ee; --muted: #9aa4b2; --line: #2a323c;
-    --panel: #161c24; --accent: #60a5fa; --accent-fg: #0b1220; --err: #f87171;
+  :root[data-skin="dark"] {
+    color-scheme: dark;
+    --bg: #0d0d0d; --fg: #ffffff; --muted: #898781; --line: #2c2c2a;
+    --panel: #1a1a19; --accent: #3987e5; --accent-fg: #ffffff; --err: #e0a030;
+  }
+  :root[data-skin="paper"] {
+    color-scheme: light;
+    --bg: #f9f9f7; --fg: #0b0b0b; --muted: #898781; --line: #e1e0d9;
+    --panel: #fcfcfb; --accent: #2a78d6; --accent-fg: #ffffff; --err: #a15c00;
+  }
+  :root[data-skin="neuromancer"] {
+    color-scheme: dark;
+    --bg: #0a0e14; --fg: #c6d3d6; --muted: #6b8085; --line: #2b3b48;
+    --panel: #111820; --accent: #00e5ff; --accent-fg: #0a0e14; --err: #ff5f56;
+    --font: ui-monospace, SFMono-Regular, Menlo, "DejaVu Sans Mono", Consolas, monospace;
+    --glow: 0 0 6px rgba(0, 229, 255, 0.35);
+    --overlay: repeating-linear-gradient(to bottom, rgba(0, 229, 255, 0.06) 0px, rgba(0, 229, 255, 0.06) 1px, transparent 1px, transparent 3px);
   }
   * { box-sizing: border-box; }
-  body { margin: 0; background: var(--bg); color: var(--fg); font: 15px/1.5 system-ui, sans-serif; }
+  body { margin: 0; background: var(--bg) var(--overlay); color: var(--fg); font: 15px/1.5 var(--font); }
+  h1 { text-shadow: var(--glow); }
+  .top { display: flex; justify-content: space-between; align-items: flex-start; gap: 12px; flex-wrap: wrap; }
+  #skin { font: inherit; padding: 4px 6px; border: 1px solid var(--line); border-radius: 4px; background: var(--bg); color: var(--fg); }
   main { max-width: 1100px; margin: 0 auto; padding: 24px 16px 48px; }
   h1 { font-size: 1.5rem; margin: 0 0 4px; }
   .sub { color: var(--muted); margin: 0 0 20px; }
@@ -70,11 +93,31 @@
   summary { cursor: pointer; color: var(--fg); }
   a { color: var(--accent); }
 </style>
+<script>
+(function () {
+  try {
+    var v = localStorage.getItem("kaks.skin");
+    if (v && ["light", "dark", "paper", "neuromancer"].indexOf(v) >= 0) document.documentElement.setAttribute("data-skin", v);
+  } catch (e) { /* storage unavailable: follow the system */ }
+})();
+</script>
 </head>
 <body>
 <main>
-  <h1>kaks: dN/dS in the browser</h1>
-  <p class="sub">Paste coding sequences, choose a method, run. Everything runs locally in WebAssembly; no sequence is uploaded.</p>
+  <div class="top">
+    <div>
+      <h1>kaks: dN/dS in the browser</h1>
+      <p class="sub">Paste coding sequences, choose a method, run. Everything runs locally in WebAssembly; no sequence is uploaded.</p>
+    </div>
+    <label style="margin:0;gap:6px"><span class="status">Colours</span>
+      <select id="skin" title="Colour skin">
+        <option value="">Follow system</option>
+        <option value="light">Light</option>
+        <option value="dark">Dark</option>
+        <option value="paper">Paper</option>
+        <option value="neuromancer">Neuromancer</option>
+      </select></label>
+  </div>
 
   <div class="grid">
     <section>
@@ -89,6 +132,7 @@ ATG..."></textarea>
       <div class="row">
         <button class="primary" id="run" disabled>Run</button>
         <button id="example">Load example pair</button>
+        <button id="example20">Load 20 example files</button>
         <button id="clear">Clear</button>
         <button id="dl-tsv" disabled>Download TSV</button>
         <button id="dl-json" disabled>Download JSON</button>
@@ -307,11 +351,13 @@ ATGAACGCCGACGCAAACCTGACGGATTTTCAGTGCGAGTATCCATCGATTGATCTCACTTTTCAAATTAAGCTTTTACT
       (errors.length ? `, ${errors.length} failed` : "");
     $("dl-tsv").disabled = $("dl-json").disabled = false;
     lastRows = jsonRows;
+    lastNFiles = jobs.length;
     setupPlots();
   }
 
   // ---------------- built-in plots ----------------
   let lastRows = [];
+  let lastNFiles = 0;
   let lastPlots = null;
   const num = (id) => { const v = $(id).value.trim(); return v === "" ? null : Number(v); };
   function plotState() {
@@ -328,7 +374,8 @@ ATGAACGCCGACGCAAACCTGACGGATTTTCAGTGCGAGTATCCATCGATTGATCTCACTTTTCAAATTAAGCTTTTACT
     sel.innerHTML = "";
     srcs.forEach((k) => { const o = document.createElement("option"); o.value = k; o.textContent = SOURCES[k].label; sel.appendChild(o); });
     if (srcs.includes(prev)) sel.value = prev;
-    $("plots").hidden = lastRows.length < 2 || !srcs.length;
+    // plots and the model panel are for batches: several files in one run
+    $("plots").hidden = lastNFiles < 2 || lastRows.length < 2 || !srcs.length;
     if (!$("plots").hidden) updatePlots();
   }
   function updatePlots() {
@@ -409,11 +456,38 @@ ATGAACGCCGACGCAAACCTGACGGATTTTCAGTGCGAGTATCCATCGATTGATCTCACTTTTCAAATTAAGCTTTTACT
       : "";
   }
 
+  (function () {
+    const sel = $("skin");
+    sel.value = document.documentElement.getAttribute("data-skin") || "";
+    sel.addEventListener("change", () => {
+      const v = sel.value;
+      if (v) document.documentElement.setAttribute("data-skin", v); else document.documentElement.removeAttribute("data-skin");
+      try { if (v) localStorage.setItem("kaks.skin", v); else localStorage.removeItem("kaks.skin"); } catch { /* optional */ }
+    });
+  })();
   $("file").addEventListener("change", async (ev) => {
     files = Array.from(ev.target.files);
     showFiles();
     // a single file is also shown in the box so it can be edited
     if (files.length === 1) { $("input").value = await files[0].text(); files = []; $("file").value = ""; showFiles(); }
+  });
+  $("example20").addEventListener("click", async () => {
+    setError("");
+    status.textContent = "loading example files…";
+    try {
+      const manifest = await (await fetch("./examples/manifest.json")).json();
+      const loaded = await Promise.all(manifest.map(async (m) => {
+        const text = await (await fetch("./examples/" + m.file)).text();
+        return new File([text], m.file, { type: "text/plain" });
+      }));
+      files = loaded;
+      $("file").value = "";
+      $("input").value = "";
+      $("prealigned").checked = true;
+      $("code").value = "1";
+      showFiles();
+      status.textContent = `${files.length} example files loaded (in-frame codon alignments from PAML's example data); press Run`;
+    } catch (e) { status.textContent = ""; setError("could not load the example files: " + e); }
   });
   $("example").addEventListener("click", () => { $("input").value = EXAMPLE; $("prealigned").checked = false; files = []; $("file").value = ""; showFiles(); });
   $("clear").addEventListener("click", () => { $("input").value = ""; files = []; $("file").value = ""; showFiles(); setError(""); $("tablewrap").hidden = true; $("rawbox").hidden = true; $("plots").hidden = true; lastRows = []; lastPlots = null; status.textContent = "ready"; });
