@@ -6,6 +6,7 @@
 #   make install PREFIX=/usr/local      (-> /usr/local/bin/kaks)
 #   make install BINDIR=$HOME/bin
 #   make uninstall
+#   make static          fully static x86_64 Linux binary (musl) -> target/x86_64-unknown-linux-musl/release/kaks
 #   make wasi            WASI command-line build -> target/wasm32-wasip1/release/kaks.wasm
 #   make web             browser build -> ../../web/pkg (needs wasm-bindgen-cli 0.2.130)
 #   make clean
@@ -24,7 +25,7 @@ BIN     = kaks
 TARGET  = target/release/$(BIN)
 TST     = $(abspath ../../tst)
 
-.PHONY: all build test install uninstall clean wasi web
+.PHONY: all build test install uninstall clean static wasi web
 
 WEB     = $(abspath ../../web)
 WASM    = target/wasm32-unknown-unknown/release/subopt_kaks.wasm
@@ -45,6 +46,12 @@ install: build
 
 uninstall:
 	rm -f $(DESTDIR)$(BINDIR)/$(BIN)
+
+# Fully static Linux binary: no glibc dependency, runs on Alpine and old distros.
+static:
+	rustup target add x86_64-unknown-linux-musl
+	$(CARGO) build --release --target x86_64-unknown-linux-musl
+	@echo "built target/x86_64-unknown-linux-musl/release/kaks (static)"
 
 # Runs anywhere with a WASI runtime (wasmtime, wasmer, node --experimental-wasi).
 wasi:

@@ -51,6 +51,10 @@ cargo build --release
 install -m 755 target/release/kaks /path/to/bin/
 ```
 
+`make static` builds a fully static x86_64 Linux binary with the musl target
+(no glibc dependency; runs on Alpine and old distributions). Prebuilt
+binaries, including the static one, are attached to each GitHub release.
+
 ## WebAssembly
 
 Two builds, no code changes needed for either:
