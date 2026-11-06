@@ -1,66 +1,81 @@
-Changes to suboptaln
+Changes to subopt-kaks
 
 2.0.0 (2026-11-06)
- Version numbering restarts at 2.0.0 for the whole package (C tools, the
- Rust `kaks` tool and the web page share this number).
 
- rust/subopt-kaks (kaks)
+ Behaviour changes relative to 1.0.0 (read before comparing with old runs)
+  * yn00_cds_optimal / the C aligners: optimal alignments could end one
+    residue early (wrong stride decoding the best cell). dN/dS from
+    unaligned CDS can therefore differ from 1.0.0 output; the bundled
+    test pair now matches its pre-aligned reference exactly.
+  * --gapopen / --gapext are always penalties; 1.0.0 turned them into a
+    gap bonus for any sign given.
+  * Default substitution matrix is BLOSUM62 (BLOSUM50 was never shipped).
+  * --minlen is now applied by the Zuker tools (it was parsed and ignored).
+  * kaks --genetic-code takes the NCBI transl_table id (1 = standard,
+    2 = vertebrate mitochondrial, ...); the earlier 0-5 PAML numbering is
+    gone and 0 is rejected.
+  * kaks yn00 with more than two sequences uses per-pair F3x4 codon
+    frequencies, as PAML yn00 does; --common-f3x4 restores the pooled
+    frequencies used by the C tools. Two-sequence results are unchanged.
+  * License is GNU GPL v3 or later (the Rust crate previously said MIT).
+
+ kaks (rust/subopt-kaks), version 2.0.0
   Pairwise maximum-likelihood dN/dS under the Goldman & Yang 1994 codon
   model (--method ml, --codon-freq fequal|f1x4|f3x4|fcodon), a port of
   PAML codeml runmode = -2, validated pair by pair against codeml and
-  yn00 on PAML's example data under 11 genetic codes
-  (tst/paml_compare/).
-  All 27 NCBI genetic codes, selected by transl_table id (--genetic-code,
-  --list-codes).
-  yn00 uses per-pair F3x4 frequencies like PAML yn00; --common-f3x4
-  restores the pooled frequencies of the C tools.
-  Library crate plus CLI; WebAssembly builds: WASI command line
-  (make wasi) and a browser page with batch upload (make web,
-  https://hyphaltip.github.io/subopt-kaks/).
-  Makefile install targets (make install PREFIX=|BINDIR=).
+  yn00 on PAML's example data under 11 genetic codes: 3970 comparisons,
+  3 differences, all explained (tst/paml_compare/README.md).
+  All 27 NCBI genetic codes (--genetic-code, --list-codes).
+  Library crate plus CLI. WebAssembly: WASI command line (make wasi) and
+  a browser page with batch upload of many alignment files (make web;
+  https://hyphaltip.github.io/subopt-kaks/, deployed by GitHub Actions).
+  Makefile install targets (make install PREFIX=|BINDIR=|DESTDIR=).
 
- license
+ C tools
+  build
+   Top-level Makefile: `make` configures and builds squid then src;
+   `make test`, `make install [PREFIX=...]` (installs matrices and man
+   pages, compiles the data directory into the binaries), `make rust`.
+   Links with GCC >= 10 (duplicate global `noisy` removed).
+   tst/run_tests.sh + tst/expected: byte-for-byte regression tests.
+
+  zuker.c
+   optimal_align decoded the best-cell index with the wrong stride, so the
+   local/global optimal alignment could end one residue early. The test
+   pair now gives the same dN/dS as the pre-aligned reference.
+   Global alignments now always trace back from the bottom-right cell.
+   seq2 matrix indices computed once per column instead of once per cell.
+   All error paths free their matrices; reverse_seq copies are freed.
+
+  all aligners
+   --gapopen/--gapext were negated to a positive bonus; now always a
+   penalty regardless of the sign given.
+   Uninitialised file handles / counters on early exits fixed
+   (cds_zuker_align crashed in fputc). --output - means stdout.
+   Default matrix BLOSUM62 (BLOSUM50 is not shipped); --matrix accepts a
+   bare name resolved through --matrix-dir, $SUBOPT_MATRIX_DIR, $SUBOPTDIR,
+   ./matricies/aa, ../matricies/aa, or the compiled-in data directory.
+
+  zuker_align.c
+   cds_seqs[cdsct++] wrote past the end of the 2-element array.
+
+  yn00_cds_optimal.c
+   Multiple input files no longer leak or mis-size the sequence arrays.
+
+  yn00_cds_prealigned.c
+   Header printed once, not once per input file; per-MSA memory freed.
+
+  yn00_simple.c
+   GetFreqs failure now frees its buffers and resets PAML state.
+
+ packaging
+  Top-level Makefile builds squid and the C tools; make test, make install.
   GNU GPL v3 or later throughout (LICENSE, Cargo.toml, READMEs).
+  Man pages: placeholders filled in, contact email updated.
+  Perl helper scripts take options instead of hardcoded paths.
 
- man pages
-  Placeholders (@PACKAGE@, @RELEASE@, ...) filled in.
-
-0.07 (2026-11-05)
- build
-  Top-level Makefile: `make` configures and builds squid then src;
-  `make test`, `make install [PREFIX=...]` (installs matrices and man
-  pages, compiles the data directory into the binaries), `make rust`.
-  Links with GCC >= 10 (duplicate global `noisy` removed).
-  tst/run_tests.sh + tst/expected: byte-for-byte regression tests.
-
- zuker.c
-  optimal_align decoded the best-cell index with the wrong stride, so the
-  local/global optimal alignment could end one residue early. The test
-  pair now gives the same dN/dS as the pre-aligned reference.
-  Global alignments now always trace back from the bottom-right cell.
-  seq2 matrix indices computed once per column instead of once per cell.
-  All error paths free their matrices; reverse_seq copies are freed.
-
- all aligners
-  --gapopen/--gapext were negated to a positive bonus; now always a
-  penalty regardless of the sign given.
-  Uninitialised file handles / counters on early exits fixed
-  (cds_zuker_align crashed in fputc). --output - means stdout.
-  Default matrix BLOSUM62 (BLOSUM50 is not shipped); --matrix accepts a
-  bare name resolved through --matrix-dir, $SUBOPT_MATRIX_DIR, $SUBOPTDIR,
-  ./matricies/aa, ../matricies/aa, or the compiled-in data directory.
-
- zuker_align.c
-  cds_seqs[cdsct++] wrote past the end of the 2-element array.
-
- yn00_cds_optimal.c
-  Multiple input files no longer leak or mis-size the sequence arrays.
-
- yn00_cds_prealigned.c
-  Header printed once, not once per input file; per-MSA memory freed.
-
- yn00_simple.c
-  GetFreqs failure now frees its buffers and resets PAML state.
+1.0.0 (2019-01-23)
+ GitHub release of the original C tools (no Changelog entry was written).
 
 0.06 
  yn00_cds_prealigned.c 

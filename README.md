@@ -6,7 +6,8 @@ sequences.
 * **SQUID** is Sean Eddy's sequence library (bundled in `squid/`).
 * The alignment code is based on design ideas from Michael Smoot.
 * dN/dS estimation reuses Z. Yang's `yn00` implementation from PAML, with
-  modifications to detach it from the PAML data structures.
+  modifications to detach it from the PAML data structures; `kaks` adds a
+  port of `codeml`'s pairwise maximum-likelihood estimate.
 
 ## Build
 
@@ -111,8 +112,10 @@ kaks --list-codes                           # all 27 supported genetic codes
 ```
 
 Every pair of sequences in the input is reported. Output columns are
-`SEQ1 SEQ2 dN dS OMEGA N S kappa t LENGTH` (plus `SE_dN SE_dS NG_dN NG_dS
-NG_omega` with `--method both`). `kaks --help` lists all options; see
+`SEQ1 SEQ2 dN dS OMEGA N S kappa t LENGTH`; `--method both` adds `NG_dN NG_dS
+NG_OMEGA`, `--method ml` reports the ML values with `lnL SE_dN SE_dS`, and
+`--method all` combines them with an `ML_` prefix. JSON output also carries
+the standard errors. `kaks --help` lists all options; see
 `rust/subopt-kaks/README.md` for details.
 
 ### Validation against PAML (2026-11-05)
@@ -160,11 +163,11 @@ dN=0.066778  dS=1.472123  omega=0.045362  N=832.180782  S=289.819218  kappa=1.56
 
 ## Notes
 
-This source is freely available, but should be considered a personal
-communication: it has not been properly packaged and does not yet give
-adequate credit to the code it reuses. Please contact me if you have
-questions or intend to use this for large-scale analyses so I can be sure
-it is performing properly for you.
+Version 2.0.0. The C tools are the 2004 programs with the fixes listed in
+`Changelog`; `kaks` is the maintained implementation and the one to use for
+new work. Results from 1.0.0 can differ: see "Behaviour changes" at the top
+of `Changelog` before comparing with old runs. Questions, problems, or large
+analyses you would like checked: jasonstajich.phd@gmail.com or a GitHub issue.
 
 ## License
 
