@@ -70,33 +70,41 @@ reverse_seq( const sequence * seq )
 {
   int len,i;
   sequence * newseq;
-  if( ! seq ) return 0;  
+  if( ! seq || seq->length <= 0 ) return 0;
   len = seq->length;
   newseq = (sequence *) calloc(1,sizeof(sequence));
-  if( ! len ) return 0;
-  
+  if( ! newseq ) return 0;
   newseq->seqstr = (char *)(calloc(len+1,sizeof (char)));
-  newseq->length = len;
+  if( ! newseq->seqstr ) { free(newseq); return 0; }
+  newseq->length   = len;
+  newseq->alphabet = seq->alphabet;
+  newseq->seqname  = NULL;
   for( i =0; i < len; i++ ) {
     newseq->seqstr[i] = seq->seqstr[len-i-1];
   }
   newseq->seqstr[len] = '\0';
-  return newseq;  
+  return newseq;
+}
+
+void
+free_sequence( sequence * seq )
+{
+  if( ! seq ) return;
+  free(seq->seqstr);
+  free(seq->seqname);
+  free(seq);
 }
 
 int ** 
 make_int_matrix  (int x, int y) 
 {
-  int i,j;
+  int i;
   int ** matrix;
   if( (matrix = (int **)calloc(x,sizeof(int *))) == NULL ) {
     Die("oom make int matrix\n");
   }
   for(i=0;i<x;i++) {
-    matrix[i] = calloc(y,sizeof(int));
-    for(j=0;j<y;j++) {
-      matrix[i][j] = 0;
-    }
+    matrix[i] = calloc(y,sizeof(int)); /* calloc zero-fills */
   }
   return matrix;
 }
@@ -104,18 +112,14 @@ make_int_matrix  (int x, int y)
 double ** 
 make_double_matrix  (int x, int y) 
 {
-  int i,j;
+  int i;
   double ** matrix;
   if( (matrix = (double **)calloc(x,sizeof(double *))) == NULL ){
     Die("out of memory, make double matrix\n");
   }
-  
+
   for(i=0;i<x;i++) {
     matrix[i] = calloc(y,sizeof(double));
-/*    for(j=0;j<y;j++) {
-      matrix[i][j] = 0;
-    }
-*/
   }
   return matrix;
 }

@@ -35,50 +35,45 @@ struct opt_s OPTIONS[] = {
 
 static char usage[] = "\nUsage: cds_zuker_align [-options] <sequence file>\n\n   Generate suboptimal alignments for a pair of CDS sequences using the protein sequences as the template.\n   Available options:\n   -h      : help; print version and usage info\n   -v      : verbose output -- show alignment path states.\n ";
 
-static char banner[] = "zuker_align - Generate suboptimal alignments with the Zuker algorithm";
-
-static char experts[] = "\n   --optimal     : show the optimal alignment.\n   --global      : generate global rather than the default local alignments\n   --lower_bound : Lower bound for scores to use when generating suboptimal\n                   alignments.\n   --upper_bound : Upper bound for scores to use when generating suboptimal\n                   alignments.\n   --minlen      : minimum length of suboptimal alignments to report.\n                   Default is 50\n   --max_to_show : Maximum number of alignments to show.  Default is 5.\n   --gapopen num : Gap open penalty.  Default is -10.\n   --gapext      : Gap extension penalty.  Default is -2.\n   --informat    : Format of the input sequence file database.\n   --outformat   : Format of the output sequence alignments.\n   --output      : specify an output file instead or writing to STDOUT\n   --matrix      : Path to substitution matrix.\n                   Default is ../matricies/aa/BLOSUM50.\n   --gapchar     : Provide a different gap char from '-'\n   --separate    : Write each alignment in a separate file\n";
+static char experts[] = "\n   --optimal     : show the optimal alignment.\n   --global      : generate global rather than the default local alignments\n   --lower_bound : Lower bound for scores to use when generating suboptimal\n                   alignments.\n   --upper_bound : Upper bound for scores to use when generating suboptimal\n                   alignments.\n   --minlen      : minimum length of suboptimal alignments to report.\n                   Default is 50\n   --max_to_show : Maximum number of alignments to show.  Default is 5.\n   --gapopen num : Gap open penalty.  Default is -10.\n   --gapext      : Gap extension penalty.  Default is -2.\n   --informat    : Format of the input sequence file database.\n   --outformat   : Format of the output sequence alignments.\n   --output      : specify an output file instead or writing to STDOUT\n   --matrix      : Substitution matrix: a file path, or a bare name (e.g.\n                   BLOSUM62) resolved within a matrix directory. Default BLOSUM62.\n   --matrix-dir  : Directory to search for named matrices (overrides\n                   $SUBOPT_MATRIX_DIR / $SUBOPTDIR).\n   --gapchar     : Provide a different gap char from '-'\n   --separate    : Write each alignment in a separate file\n";
 
 const int        default_cutoff_num = 5;
 const int        default_min_aln_len = 50;
 const AlignType  default_aln_type   = local;
-const char Default_submat[] = "matricies/aa/BLOSUM50";
 const char suff[] = "aln";
 
-main (int argc, char ** argv ) 
+int
+main (int argc, char ** argv )
 {
   char     *seqfile;            /* name of sequence file     */
   SQINFO    sqinfo;             /* extra info about sequence */
   SQFILE   *dbfp;		/* open sequence file        */
   int       fmt,ofmt=106;	/* format of seqfile         */
   char     *seq;		/* sequence                  */
-  int       type;		/* kAmino, kDNA, kRNA, or kOtherSeq */
   sequence  seqs[2], cds_seqs[2];
   char  *optname;
-  char  *optarg, *t, *sfname;
+  char  *optarg, *sfname = NULL;
   int    optind;
-  int    be_quiet;
   int    seqct = 0,cdsct = 0;
   int    min_aln_len      = 0;
   int    do_oneline       = 0;
   int    separate_files   = 0, provide_ofname = 0;
   char   * output_filename = 0, *submat_file = 0, *matrix_dir = 0;
-  
-  FILE  *ofd, *fd;
-  alignment   *cds_aln;
-  alignment ** alignments;  /* an array of pairwise alignments */
+  int    own_output_filename = 0;
 
-  int    i,j, aln_count, rc;
+  FILE  *ofd = NULL, *fd;
+  alignment   *cds_aln = NULL;
+  alignment ** alignments = NULL;  /* an array of pairwise alignments */
+
+  int    i,j, aln_count = 0, rc;
   struct timeval tp;
 
   Alntype = default_aln_type;
-    
+
   Max_alignments_to_report = default_cutoff_num;
-  
+
   /* Command line Parse */
   fmt       = SQFILE_UNKNOWN;	/* default: autodetect format  */
-  be_quiet  = FALSE;
-  type      =  kOtherSeq;
   
   while (Getopt(argc, argv, OPTIONS, NOPTIONS, usage, 
 		&optind, &optname, &optarg))
@@ -91,16 +86,13 @@ main (int argc, char ** argv )
 	Lower_bound  = atoi(optarg);
       else if (strcmp(optname, "--max_to_show")  == 0)  
 	Max_alignments_to_report = atoi(optarg);
-      else if (strcmp(optname, "--minlen")  == 0) 
-	min_aln_len  = atoi(optarg); 
-      else if (strcmp(optname, "--quiet")   == 0)  be_quiet  = TRUE; 
+      else if (strcmp(optname, "--minlen")  == 0)
+	min_aln_len  = atoi(optarg);
       else if (strcmp(optname, "--gapopen") == 0)  {
-	Gapopen = atoi(optarg); 
-	if( Gapopen < 0 ) Gapopen *= -1;
-	
+	/* penalties are stored as negative scores; accept 10 or -10 */
+	Gapopen = -abs(atoi(optarg));
       } else if (strcmp(optname, "--gapext")  == 0)  {
-	Gapext = atoi(optarg); 
-	if( Gapext < 0 ) Gapext *= -1;
+	Gapext = -abs(atoi(optarg));
 
       } else if (strcmp(optname, "--informat") == 0) {
 	fmt = String2SeqfileFormat(optarg);
@@ -130,11 +122,13 @@ main (int argc, char ** argv )
 
   if (argc - optind != 1) Die("%s\n", usage);
   seqfile = argv[argc-1];
-  if( ! output_filename ) { 
+  if( ! output_filename ) {
     output_filename = calloc(strlen(seqfile)+36,sizeof(char));
+    own_output_filename = 1;
     gettimeofday(&tp, NULL);
-    sprintf(output_filename,"%s_%ld",seqfile, tp.tv_sec);
-  }  
+    sprintf(output_filename,"%s_%ld",seqfile, (long)tp.tv_sec);
+  }
+  (void)min_aln_len; /* parsed for compatibility; not applied */
 
   {
     char *resolved = resolve_matrix_file(submat_file, matrix_dir);
@@ -149,15 +143,13 @@ main (int argc, char ** argv )
   }
   /* open matrix */
   fd = fopen(submat_file, "r");
-  if( !fd || 
+  if( !fd ||
       ! ParsePAMFile(fd,&ScoringMatrix, &MatrixScale) ) {
     fprintf(stderr, "Cannot parse or open matrix file %s\n",submat_file);
     free(submat_file);
-#if DMALLOC
-    dmalloc_shutdown();
-#endif
-    exit(EXIT_SUCCESS);
-  }  
+    exit(EXIT_FAILURE);
+  }
+  fclose(fd);
   
   /* Try to work around inability to autodetect from a pipe or .gz:
    * assume FASTA format
@@ -192,20 +184,27 @@ main (int argc, char ** argv )
     }
     FreeSequence(NULL, &sqinfo);    
   }
+  SeqfileClose(dbfp);
   if( seqct != 2 ) {
-    fprintf(stderr,"Must have provided a valid file with at least 2 sequences in it");
+    fprintf(stderr,"Must have provided a valid file with at least 2 sequences in it\n");
     goto end;
   }
 
   alignments = (alignment **)calloc(Max_alignments_to_report,
 				    sizeof(alignment *));
-  
-  aln_count = zuker_align(&seqs[0],&seqs[1],&alignments);
-  
 
-  sfname = calloc(strlen(output_filename) + 10,sizeof(char));
-  
+  aln_count = zuker_align(&seqs[0],&seqs[1],&alignments);
+  if( aln_count < 0 ) {
+    fprintf(stderr,"error in zuker align\n");
+    aln_count = 0;
+    goto end;
+  }
+
+  sfname = calloc(strlen(output_filename) + 24,sizeof(char));
+
   for( i = 0; i < aln_count; i++ ) {
+    cleanup_alignment(cds_aln);
+    cds_aln = NULL;
     rc = mrtrans(alignments[i], cds_seqs, &cds_aln,0);
     if( rc != 0  ) { 
       fprintf(stderr, "Could not map the coding sequence to the protein alignemnt for aln %d: %d\n",i,rc);
@@ -221,7 +220,7 @@ main (int argc, char ** argv )
 	goto end;
       }
       
-    } else if(! ofd && provide_ofname ) { 
+    } else if(! ofd && provide_ofname && strcmp(output_filename,"-") != 0 ) { 
       ofd = fopen(output_filename,"w");
       if( ! ofd ) {
 	fprintf(stderr, "could not open file %s",output_filename);
@@ -242,11 +241,11 @@ main (int argc, char ** argv )
     }
   }
   
+  end:
   if( ofd && ofd != stdout )
     fclose(ofd);
-  
-  end:
   if( sfname) free(sfname) ;
+  if( own_output_filename ) free(output_filename);
   free(submat_file);
   Free2DArray((void **)ScoringMatrix,27);
   for(i =0; i< seqct; i++ ) {
@@ -265,11 +264,8 @@ main (int argc, char ** argv )
       alignments[i] = 0;
     }
   }
-  
+  free(alignments);
   cleanup_alignment(cds_aln);
-#if DMALLOC
-  dmalloc_shutdown();
-#endif
 
   return 0;
 }

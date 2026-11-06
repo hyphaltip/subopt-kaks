@@ -22,8 +22,8 @@ int mrtrans( alignment * protein_align,
 	     alignment ** ret_cds_aln,
 	     int remove_last_stop) 
 {
-  int i,j,k, cds_start_offset, cds_end_offset;
-  char * aaptr, * cdsptr, *transptr, *tmpendptr;
+  int i,k, cds_start_offset, cds_end_offset;
+  char * aaptr, * cdsptr, *transptr;
   /* this is a 'flushed' alignment */
   int protein_aln_len = protein_align->msa->alen; 
   int cds_aln_len = protein_aln_len * CODON_LENGTH; 
@@ -102,14 +102,13 @@ int mrtrans( alignment * protein_align,
       fprintf(stderr,"cannot allocate memory for cds_aln->msa->sqname[%d]",k);
       return -1;
     }    
-    strncpy(cds_aln->msa->sqname[k], cds_seqs[k].seqname,SQINFO_NAMELEN);
-    strncpy(cds_aln->sqinfo[k].name, cds_seqs[k].seqname,SQINFO_NAMELEN);
+    strncpy(cds_aln->msa->sqname[k], cds_seqs[k].seqname,SQINFO_NAMELEN-1);
+    strncpy(cds_aln->sqinfo[k].name, cds_seqs[k].seqname,SQINFO_NAMELEN-1);
     
     transptr  = cds_aln->msa->aseq[k]+0; /* point to the beginning of
 					  * the mem */
     
     cdsptr    = cds_seqs[k].seqstr+cds_start_offset;
-    tmpendptr = cds_seqs[k].seqstr+cds_end_offset;
     c = 0;
     for( aaptr = protein_align->msa->aseq[k]+0; 
 	 aaptr < protein_align->msa->aseq[k]+protein_aln_len; 
@@ -146,7 +145,8 @@ int mrtrans( alignment * protein_align,
     /* allocate the sequence info for writing this in single seq format */
     cds_aln->sqinfo[k].flags = SQINFO_DESC | SQINFO_ID;
     
-    sprintf(cds_aln->sqinfo[k].desc, "score=%d alignlen=%d start=%d stop=%d ",
+    snprintf(cds_aln->sqinfo[k].desc, SQINFO_DESCLEN,
+	    "score=%d alignlen=%d start=%d stop=%d ",
 	    protein_align->score,
 	    cds_aln->msa->alen,
 	    cds_aln->sqinfo[k].start+1,
@@ -157,8 +157,7 @@ int mrtrans( alignment * protein_align,
       fprintf(stderr,"cannot allocate memory for cds_aln->msa->sqname[%d]",k);
       return -1;
     }
-    strncpy(cds_aln->msa->sqdesc[k], cds_aln->sqinfo[k].desc, 
-	    SQINFO_DESCLEN);    
+    strcpy(cds_aln->msa->sqdesc[k], cds_aln->sqinfo[k].desc);    
   }
   return 0;
 }

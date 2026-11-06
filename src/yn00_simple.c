@@ -68,7 +68,7 @@ enum {Fequal, F1x4, F3x4, Fcodon} CodonFreqs;
 
 extern char BASEs[], AAs[], Nsensecodon[];
 extern int GeneticCode[][NCODE];
-int noisy;
+extern int noisy;  /* defined in tools.c */
 enum {NODEBUG, KAPPA, SITES, DIFF} DebugFunctions;
 int debug=0;
 int sspace=0;
@@ -83,6 +83,7 @@ int do_kaks_yn00(MSA * cds_alignment,
   char ch, **ctmp;
   int * gap,gapcount=0, counter= 0,cleanlen,len;
   int * skipcodon;
+  int rc = 0;
   com.seqtype=1;  com.cleandata=1; com.ndata=1;  com.print=0;
   noisy=1; com.icode=0;  com.fcommon=1;  com.kcommon=1;
    
@@ -187,8 +188,9 @@ int do_kaks_yn00(MSA * cds_alignment,
     DistanceMatNG86(NGdist,0);  
     if(com.fcommon)  {
       if( GetFreqs(-1,-1,f3x4,com.pi) < 0 ) {
-	return(-1);
-      }      
+	rc = -1;
+	goto end;
+      }
     }
     
     if(com.kcommon) {
@@ -199,7 +201,8 @@ int do_kaks_yn00(MSA * cds_alignment,
       FOR (js,is) {	  
 	if(!com.fcommon) {
 	  if( GetFreqs(is,js,f3x4,com.pi) < 0 ) {
-	    return(-1);
+	    rc = -1;
+	    goto end;
 	  }
 	}
 	
@@ -232,7 +235,7 @@ int do_kaks_yn00(MSA * cds_alignment,
   if(com.fpatt) free(com.fpatt);
   if( space) free(space);
   com.ns = com.ls = 0;
-  return (0);
+  return (rc);
 }
 
 int DistanceYN00(int is, int js, double*S, 

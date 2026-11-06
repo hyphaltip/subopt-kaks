@@ -10,7 +10,6 @@
 #include "align.h"
 #include "mrtrans.h"
 #include "paml.h"
-#include <sys/time.h> /* used only for getting a reasonably unique filename */
 
 struct opt_s OPTIONS[] = {
   { "-h",              TRUE, sqdARG_NONE },  
@@ -34,10 +33,23 @@ static char usage[] = "\nUsage: yn00_cds_optimal [-options] <sequence file>\n\n 
 static char experts[] = "\n   --global      : generate global rather than the default local alignments\n   --gapopen num : Gap open penalty.  Default is -10.\n   --gapext      : Gap extension penalty.  Default is -2.\n   --informat    : Format of the input sequence file database.\n   --outformat   : Format of the output sequence alignments.\n   --output      : specify an output file instead or writing to STDOUT\n   --matrix      : Substitution matrix: a file path, or a bare name (e.g.\n                   BLOSUM62) resolved within a matrix directory. Default BLOSUM62.\n   --matrix-dir  : Directory to search for named matrices (overrides\n                   $SUBOPT_MATRIX_DIR / $SUBOPTDIR).\n   --gapchar     : Provide a different gap char from '-'\n   --showtable   : Show the summary Ka/Ks table instead of the alignment.\n   --noheader     : Do not show the header for the table summary";
 
 const AlignType  default_aln_type   = local;
-const char Default_submat[] = "matricies/aa/BLOSUM50";
-const char suff[] = "aln";
 
-main (int argc, char ** argv ) 
+/* Free an array of `n` sequences allocated by the reading loop. */
+static void
+release_seqs (sequence ** arr, int n)
+{
+  int i;
+  if( ! *arr ) return;
+  for(i = 0; i < n; i++) {
+    free((*arr)[i].seqstr);
+    free((*arr)[i].seqname);
+  }
+  free(*arr);
+  *arr = NULL;
+}
+
+int
+main (int argc, char ** argv )
 {
   char     *seqfile;            /* name of sequence file     */
   SQINFO    sqinfo;             /* extra info about sequence */
@@ -47,26 +59,22 @@ main (int argc, char ** argv )
   char     *seq;		/* sequence                  */
   int       type;		/* kAmino, kDNA, kRNA, or kOtherSeq */
   sequence  * seqs = NULL, * cds_seqs = NULL;
-  sequence  tmp_seqs[2], tmp_cds_seqs[2];
+  sequence  tmp_cds_seqs[2];
   char  *optname;
-  char  *optarg, *t;
+  char  *optarg;
   int    optind;
-  int    be_quiet;
   int    seqct = 0,cdsct = 0;
-  int    min_aln_len      = 0;
   int    do_oneline       = 0;
   char   * output_filename = 0, *submat_file = 0, *matrix_dir = 0;
   int    showaln = 1;
   int    showheader=1;
-  FILE  *ofd, *fd;
-  alignment   *cds_aln;
+  FILE  *ofd = stdout, *fd;
+  alignment   *cds_aln = NULL;
   alignment * opt_alignment = NULL;  /* place for pairwise alignment */
 
-  int    len,i,j, k, jk,ik,aln_count, rc;
+  int    len,i,j, k, jk,ik, rc;
   pairwise_distances pwMLdist, pwNGdist;
   int firsttime = 1;
-  
-  struct timeval tp;
 
   pwMLdist.N    = make_double_matrix(NUM_PW_SEQS,NUM_PW_SEQS);
   pwMLdist.dN   = make_double_matrix(NUM_PW_SEQS,NUM_PW_SEQS);
@@ -93,26 +101,23 @@ main (int argc, char ** argv )
   
   /* Command line Parse */
   fmt       = SQFILE_UNKNOWN;	/* default: autodetect format  */
-  be_quiet  = FALSE;
   type      =  kOtherSeq;
+  (void)type;
 
   /* for our purposes this is only pairwise alignments, but
-   * would rather do it correctly in case we move to MSA case 
+   * would rather do it correctly in case we move to MSA case
    */
-  
-  while (Getopt(argc, argv, OPTIONS, NOPTIONS, usage, 
+
+  while (Getopt(argc, argv, OPTIONS, NOPTIONS, usage,
 		&optind, &optname, &optarg))
     {
       if      (strcmp(optname, "--matrix") == 0)  submat_file = optarg;
       else if (strcmp(optname, "--matrix-dir") == 0) matrix_dir = optarg;
-      else if (strcmp(optname, "--quiet")   == 0)  be_quiet  = TRUE;
       else if (strcmp(optname, "--gapopen") == 0)  {
-	Gapopen = atoi(optarg); 
-	if( Gapopen < 0 ) Gapopen *= -1;
-	
+	/* penalties are stored as negative scores; accept 10 or -10 */
+	Gapopen = -abs(atoi(optarg));
       } else if (strcmp(optname, "--gapext")  == 0)  {
-	Gapext = atoi(optarg); 
-	if( Gapext < 0 ) Gapext *= -1;
+	Gapext = -abs(atoi(optarg));
 
       } else if (strcmp(optname, "--informat") == 0) {
 	fmt = String2SeqfileFormat(optarg);
@@ -183,23 +188,28 @@ main (int argc, char ** argv )
 
   while( optind < argc ) {
     seqfile = argv[optind++];
-    
+
+    /* release anything left from the previous input file */
+    release_seqs(&seqs, seqct);
+    release_seqs(&cds_seqs, cdsct);
+    seqct = cdsct = 0;
+
     /* Try to work around inability to autodetect from a pipe or .gz:
      * assume FASTA format
      */
     if (fmt == SQFILE_UNKNOWN &&
 	(Strparse("^.*\\.gz$", seqfile, 0) || strcmp(seqfile, "-") == 0))
       fmt = SQFILE_FASTA;
-    
+
     if ((dbfp = SeqfileOpen(seqfile, fmt, NULL)) == NULL)
       Die("Failed to open sequence file %s for reading", seqfile);
-    
+
+    /* first pass: count the sequences so the arrays can be sized */
     while (ReadSeq(dbfp, dbfp->format, &seq, &sqinfo))
     {
       FreeSequence(seq, &sqinfo);
       seqct++;
     }
-
 
     cds_seqs = (sequence *)calloc(seqct, sizeof(sequence));
     seqs     = (sequence *)calloc(seqct, sizeof(sequence));
@@ -218,7 +228,7 @@ main (int argc, char ** argv )
 	  fprintf(stderr,"seqct is %d length is %d\n",seqct,
 		  len);
 
-	if( seqs[seqct].seqstr[len-1] == '*' ) {
+	if( len > 0 && seqs[seqct].seqstr[len-1] == '*' ) {
 	  seqs[seqct].seqstr[len-1] = '\0';
 	  seq[strlen(seq) - 3] = '\0';
 	}
@@ -226,8 +236,8 @@ main (int argc, char ** argv )
 	seqs[seqct].seqname = calloc(strlen(sqinfo.name)+1,sizeof(char));
 	cds_seqs[cdsct].seqname = calloc(strlen(sqinfo.name)+1,sizeof(char));
 	strcpy(seqs[seqct].seqname,sqinfo.name );
-	strcpy(cds_seqs[cdsct].seqname,sqinfo.name);	
-	cds_seqs[cdsct].length = sqinfo.len;
+	strcpy(cds_seqs[cdsct].seqname,sqinfo.name);
+	cds_seqs[cdsct].length = strlen(seq);
 	cds_seqs[cdsct].alphabet = ( sqinfo.type == kDNA ) ? dna : rna;
 	seqs[seqct].length = strlen(seqs[seqct].seqstr);
 	
@@ -288,10 +298,8 @@ main (int argc, char ** argv )
 	    if( do_kaks_yn00(cds_aln->msa, &pwMLdist,&pwNGdist) < 0 ) {
 	      fprintf(stderr, "warning: problem with align for %s %s\n",
 		      cds_aln->msa->sqname[0], cds_aln->msa->sqname[1]);
-	      continue;
-	    }
-
-	    for(ik = 0; ik < NUM_PW_SEQS; ik++ ) {	  
+	    } else
+	    for(ik = 0; ik < NUM_PW_SEQS; ik++ ) {
 	      for( jk = ik+1; jk < NUM_PW_SEQS; jk++ ) {
 		fprintf(ofd,"%s\t%s\t%d\t%f\t%f\t%f\t%f\t%f\t%f\t%f\t%d\n",
 			cds_aln->sqinfo[ik].name,
@@ -309,32 +317,22 @@ main (int argc, char ** argv )
 	  }
 	}
 	cleanup_alignment(cds_aln);
-	cleanup_alignment(opt_alignment); 
+	cleanup_alignment(opt_alignment);
+	cds_aln = NULL;
+	opt_alignment = NULL;
       }
     }
   }
-  if( ofd && ofd != stdout )
-    fclose(ofd);
 
   end:
+  if( ofd && ofd != stdout )
+    fclose(ofd);
+  cleanup_alignment(cds_aln);
+  cleanup_alignment(opt_alignment);
   free(submat_file);
   Free2DArray((void **)ScoringMatrix,27);
-  if( seqs ) {
-    for(i =0; i< seqct; i++ ) {
-      free(seqs[i].seqstr);
-      free(seqs[i].seqname);
-      seqs[i].seqstr = seqs[i].seqname = 0;
-    }
-    free(seqs);
-  }
-  if( cds_seqs ) {
-    for(i = 0; i < cdsct; i++) {
-      free(cds_seqs[i].seqstr);
-      free(cds_seqs[i].seqname);
-      cds_seqs[i].seqstr = cds_seqs[i].seqname = 0;
-    }
-    free(cds_seqs);
-  }
+  release_seqs(&seqs, seqct);
+  release_seqs(&cds_seqs, cdsct);
   
   cleanup_matrix((void **)pwMLdist.N,NUM_PW_SEQS);
   cleanup_matrix((void **)pwMLdist.dN,NUM_PW_SEQS);

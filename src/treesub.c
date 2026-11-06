@@ -1457,7 +1457,7 @@ int cPMat (double P[],double t,int n,complex cU[],complex cV[],complex cRoot[])
    if (t<1e-6) { identity (P, n); return(0); }
    FOR (i,n) cUd[i*n+0]=cU[i*n+0];
    for (j=1; j<n; j++) {
-      cY.re=cRoot[j].re*t; cY.im=cRoot[j].im*t; cY=cexp(cY);
+      cY.re=cRoot[j].re*t; cY.im=cRoot[j].im*t; cY=paml_cexp(cY);
       for (i=0; i<n; i++)  cUd[i*n+j]=cby(cU[i*n+j],cY);
    }
    FOR (i,n)   {

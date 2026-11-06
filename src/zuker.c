@@ -20,10 +20,34 @@ int Gapext  = -2;
 int ** ScoringMatrix;
 float MatrixScale;
 AlignType Alntype;
-int Verbose = 0, rc;
+int Verbose = 0;
 int Upper_bound = INT_MAX, Lower_bound = 0;
 int Max_alignments_to_report;
-char GapChar = '-', *t;
+char GapChar = '-';
+
+/* Copy a NUL-terminated name into a fixed buffer of `size` bytes,
+ * always leaving the result NUL-terminated. */
+static void
+copy_name (char * dst, const char * src, size_t size)
+{
+  if( size == 0 ) return;
+  if( src == NULL ) { dst[0] = '\0'; return; }
+  strncpy(dst, src, size - 1);
+  dst[size - 1] = '\0';
+}
+
+/* Free every matrix allocated by zuker_align(). */
+static void
+free_zuker_matrices (int ** sf, int ** sr, int ** z,
+		     whence ** df, whence ** dr, int rows)
+{
+  cleanup_matrix( (void **)sf, rows + 1);
+  cleanup_matrix( (void **)sr, rows + 1);
+  cleanup_matrix( (void **)df, rows + 1);
+  cleanup_matrix( (void **)dr, rows + 1);
+  cleanup_matrix( (void **)z,  rows);
+  free(sf); free(sr); free(z); free(df); free(dr);
+}
 int Alignment_cutoff_percent = 100;
 
 int 
@@ -32,15 +56,15 @@ zuker_align ( const sequence * seq1,
 	      alignment *** ret_alignments)
 {
   
-  int count =0,i,j,k;
+  int i,j,rc;
   int ** score_fmatrix, **score_rmatrix, **zuker_matrix;
-  whence ** direction_fmatrix, **direction_rmatrix;  
+  whence ** direction_fmatrix, **direction_rmatrix;
   sequence * rev1, * rev2;
-  int  seenscore = 0, possible_score_count =0, num_alignments =0;
-  register int idx1,idx2,m,n;
-  int optimalscore = -9999; /* arbitrary low number */
+  int  seenscore = 0, num_alignments =0;
+  int  idx1,idx2,m,n;
+  int optimalscore = INT_MIN;
   alignment * pw_aln;
-	
+
   m = seq1->length-1;
   n = seq2->length-1;
   
@@ -58,11 +82,18 @@ zuker_align ( const sequence * seq1,
   
   rev1 = reverse_seq(seq1);
   rev2 = reverse_seq(seq2);
-  
-  if( fill_matrix(seq1, seq2, &score_fmatrix, &direction_fmatrix) < 0 ) {
+  if( ! rev1 || ! rev2 ) {
+    free_sequence(rev1); free_sequence(rev2);
+    free_zuker_matrices(score_fmatrix, score_rmatrix, zuker_matrix,
+			direction_fmatrix, direction_rmatrix, seq1->length);
     return -1;
   }
-  if(  fill_matrix(rev1, rev2, &score_rmatrix, &direction_rmatrix) < 0 ){
+
+  if( fill_matrix(seq1, seq2, &score_fmatrix, &direction_fmatrix) < 0 ||
+      fill_matrix(rev1, rev2, &score_rmatrix, &direction_rmatrix) < 0 ) {
+    free_sequence(rev1); free_sequence(rev2);
+    free_zuker_matrices(score_fmatrix, score_rmatrix, zuker_matrix,
+			direction_fmatrix, direction_rmatrix, seq1->length);
     return -1;
   }
   
@@ -75,16 +106,14 @@ zuker_align ( const sequence * seq1,
   /* Build the Zuker matrix which is fwd+rev */
 
   for(i=0;i < m;i++) {
-    idx1 = toupper(seq1->seqstr[i]) - FIRSTCHAR;
+    idx1 = toupper((unsigned char)seq1->seqstr[i]) - FIRSTCHAR;
     if( idx1 < 0 || idx1 > 25 ) idx1 = STOPAANUM;
-    assert(idx1 >= 0);    
     for(j=0; j < n; j++) {
       /* The numbers are flipped because we're doing fwd+back
        * so are adding numbers from the reverse sequences
        */
-      idx2 = toupper(seq2->seqstr[j]) - FIRSTCHAR;      
+      idx2 = toupper((unsigned char)seq2->seqstr[j]) - FIRSTCHAR;
       if( idx2 < 0 || idx2 > 25 ) idx2 = STOPAANUM;
-      assert(idx2 >= 0);    
       seenscore = zuker_matrix[i][j] = 
 	ScoringMatrix[idx1][idx2] +
 	score_fmatrix[i][j] + 
@@ -109,23 +138,19 @@ zuker_align ( const sequence * seq1,
    * number of alignments we skip those which don't meet the
    * upper/lower boundary requirements
    */
-  for( i =0; i < m; i++)
-    for( j= 0; j < n; j++ )
-      if( zuker_matrix[i][j] >= Lower_bound && 
-	  zuker_matrix[i][j] <= Upper_bound )
-	possible_score_count++;
-  
-  for( i =0; i < m; i++ ) 
-    for( j = 0; j < n; j++ ) 
-      if( zuker_matrix[i][j] >= Lower_bound && 
+  rc = 0;
+  for( i =0; i < m && rc == 0; i++ )
+    for( j = 0; j < n; j++ )
+      if( zuker_matrix[i][j] >= Lower_bound &&
 	  zuker_matrix[i][j] <= Upper_bound &&
 	  num_alignments < Max_alignments_to_report) {
-	
+
 	if( (pw_aln = calloc( 1,sizeof(alignment))) == NULL ) {
 	  fprintf(stderr,"oom pw_aln alloc\n");
-	  return -1;
+	  rc = -1;
+	  break;
 	}
-	
+
 	rc = create_pairwise_zuker_alignment(i,j,
 				       seq1,seq2,
 				       rev1,rev2,
@@ -134,29 +159,20 @@ zuker_align ( const sequence * seq1,
 				       direction_rmatrix,
 				       pw_aln);
 	if( rc == 0 ) {
-	  (*ret_alignments)[num_alignments++] = pw_aln;	 
+	  (*ret_alignments)[num_alignments++] = pw_aln;
 	} else {
-	  // cleanup_alignment(pw_aln);
-	  return -1;
+	  cleanup_alignment(pw_aln);
+	  break;
 	}
 	pw_aln = NULL;
       }
 
-  free(rev1);
-  free(rev2);
-  cleanup_matrix( (void **)score_fmatrix,    seq1->length +1);
-  cleanup_matrix( (void **)score_rmatrix,    seq1->length +1);
-  //  fix me soon
-  cleanup_matrix( (void **)direction_fmatrix,seq1->length +1);
-  cleanup_matrix( (void **)direction_rmatrix,seq1->length +1);
-  cleanup_matrix( (void **)zuker_matrix,     seq1->length);
-  free(score_fmatrix);
-  free(score_rmatrix);
-  free(zuker_matrix);
-  free(direction_fmatrix);
-  free(direction_rmatrix);
-  
-  return num_alignments;
+  free_sequence(rev1);
+  free_sequence(rev2);
+  free_zuker_matrices(score_fmatrix, score_rmatrix, zuker_matrix,
+		      direction_fmatrix, direction_rmatrix, seq1->length);
+
+  return rc < 0 ? -1 : num_alignments;
 }
 
 int 
@@ -165,15 +181,11 @@ optimal_align ( const sequence * seq1,
 		alignment * ret_alignment)
 {
   
-  int count =0,i,j,k;
+  int i,j;
   int ** score_matrix;
-  whence ** direction_matrix;  
+  whence ** direction_matrix;
   int  rc, best_loc;
-  register int idx1,idx2,m,n;
-   
-  m = seq1->length-1;
-  n = seq2->length-1;
-  
+
   score_matrix = make_int_matrix(seq1->length+2,
 				 seq2->length+2);
   
@@ -193,11 +205,11 @@ optimal_align ( const sequence * seq1,
     print_matrix(score_matrix,seq1,seq2,1,"forward");
   }
 
-  /* Now we are going to create the alignment.
+  /* Now we are going to create the alignment.  fill_matrix() encodes
+   * the end cell as i * (len2 + 1) + j; decode with the same stride.
    */
-  
-  i = (int)(best_loc / seq1->length);
-  j = seq2->length % best_loc;
+  i = best_loc / (seq2->length + 1);
+  j = best_loc % (seq2->length + 1);
   if( traceback(i,j,seq1,seq2,
 		score_matrix,
 		direction_matrix,
@@ -230,26 +242,40 @@ fill_matrix ( const sequence * seq1,
 	      whence *** direction_matrix) 
 {
   int i,j; /* i is always down, j is always across */
-  register int idx1,idx2;
-  int prev, best_loc = 0, best_score = -9999;
-  int score, t, e, s, c, beginAcrossGap, tmpAcross, tmpDown,diag;
-  int *D, *C, *beginDownGap;
+  int idx1,idx2;
+  int prev, best_loc = 0, best_score = INT_MIN;
+  int t, e, s, c, beginAcrossGap, tmpAcross, tmpDown,diag;
+  int *D = NULL, *C = NULL, *beginDownGap = NULL, *idx2arr = NULL;
+  const int *scorerow;
+  const int stride = seq2->length + 1; /* best_loc = i * stride + j */
+
   D = (int *) calloc(seq2->length+1, sizeof(int));
-  
   if( D == NULL ) {
-    fprintf(stderr,"OOM for D allocate %d\n",seq2->length);    
+    fprintf(stderr,"OOM for D allocate %d\n",seq2->length);
     goto error;
   }
 
   C = (int *) calloc(seq2->length+1, sizeof(int));
   if( C == NULL) {
-    fprintf(stderr,"OOM for C allocate %d\n",seq2->length);    
+    fprintf(stderr,"OOM for C allocate %d\n",seq2->length);
     goto error;
   }
-  
+
   if( (beginDownGap = (int *) calloc(seq2->length+1, sizeof(int))) == 0) {
-    fprintf(stderr,"OOM for beginDownGap allocate %d\n",seq2->length);    
+    fprintf(stderr,"OOM for beginDownGap allocate %d\n",seq2->length);
     goto error;
+  }
+
+  /* Map each residue of seq2 to its scoring-matrix index once, rather
+   * than once per cell of the DP matrix. */
+  if( (idx2arr = (int *) calloc(seq2->length+1, sizeof(int))) == 0) {
+    fprintf(stderr,"OOM for idx2arr allocate %d\n",seq2->length);
+    goto error;
+  }
+  for(j = 1; j <= seq2->length; j++ ) {
+    idx2 = toupper((unsigned char)seq2->seqstr[j-1]) - FIRSTCHAR;
+    if( idx2 < 0 || idx2 > 25 ) idx2 = STOPAANUM;
+    idx2arr[j] = idx2;
   }
   
   
@@ -304,15 +330,12 @@ fill_matrix ( const sequence * seq1,
       fprintf(stderr,"Don't know about the alignment type %d\n",Alntype);
       return -1;
     }
-    idx1 = toupper(seq1->seqstr[i-1]) - FIRSTCHAR;
+    idx1 = toupper((unsigned char)seq1->seqstr[i-1]) - FIRSTCHAR;
     if( idx1 < 0 || idx1 > 25 ) idx1 = STOPAANUM;
-    assert(idx1 >= 0);
-    beginAcrossGap = 0;    
+    scorerow = ScoringMatrix[idx1];
+    beginAcrossGap = 0;
     for(j = 1; j <= seq2->length; j++ ) {
-      idx2 = toupper(seq2->seqstr[j-1]) - FIRSTCHAR;
-      if( idx2 < 0 || idx2 > 25 ) idx2 = STOPAANUM;
-      
-      assert(idx2 >= 0 );
+      idx2 = idx2arr[j];
       /* Find the best gap strategy for going ACROSS.
        * If the a gap is created, note where it begins. 
        * c is the value immediately to the left
@@ -339,7 +362,7 @@ fill_matrix ( const sequence * seq1,
       
       D[j] = tmpDown;
       
-      diag = s + ScoringMatrix[idx1][idx2];
+      diag = s + scorerow[idx2];
       
       /* D[j] is the best down
        * e is the best across
@@ -393,31 +416,34 @@ fill_matrix ( const sequence * seq1,
       C[j] = c;
       (*score_matrix)[i][j] = C[j];
       if( c >= best_score ) {
-	best_loc = ((i-1) * seq1->length) + j;
+	best_loc = i * stride + j;
 	best_score = c;
       }
-      
+
       if(Verbose > 1 ) {
 	print_matrix((*score_matrix),seq1,seq2,1,"score");
       }
     }
   }
 
+  /* A global alignment always ends in the bottom-right cell. */
+  if( Alntype == global )
+    best_loc = seq1->length * stride + seq2->length;
+
   free(D);
   free(C);
   free(beginDownGap);
+  free(idx2arr);
 
   return best_loc;
 
   error:
-  if( Verbose > 0 ) 
+  if( Verbose > 0 )
     fprintf(stderr,"Error in pairwise alignment construction\n");
-  if( D) 
-    free(D);
-  if( C) 
-    free(C);
-  if( beginDownGap )
-    free(beginDownGap);
+  free(D);
+  free(C);
+  free(beginDownGap);
+  free(idx2arr);
   return -1;
 }
 
@@ -442,10 +468,11 @@ create_pairwise_zuker_alignment( int i, int j,
   
   int score = zuker_matrix[i][j];
   int seq_counter = 0;
-  
+
   int bi = i - 1;
   int bj = j - 1;
   int diff,x,dir,k, begin1Index, begin2Index, end1Index, end2Index;
+  for(k=0;k < NUM_PW_SEQS;k++) seqstr[k] = rev_seqstr[k] = NULL;
 
   if( ! pw_aln ) 
     return -1;
@@ -627,23 +654,25 @@ create_pairwise_zuker_alignment( int i, int j,
     seqstr[k] = 0;
   }
 
-  strncpy(pw_aln->msa->sqname[0], seq1->seqname, SQINFO_NAMELEN);
-  strncpy(pw_aln->msa->sqname[1], seq2->seqname, SQINFO_NAMELEN);
+  copy_name(pw_aln->msa->sqname[0], seq1->seqname, SQINFO_NAMELEN);
+  copy_name(pw_aln->msa->sqname[1], seq2->seqname, SQINFO_NAMELEN);
 
   pw_aln->msa->nseq      = NUM_PW_SEQS;
   pw_aln->msa->alen      = seq_counter;
   pw_aln->score           = score; /* alignment score */
   pw_aln->sqinfo[0].start = begin1Index;
   pw_aln->sqinfo[0].stop = end1Index;
-  strncpy(pw_aln->sqinfo[0].name, seq1->seqname,SQINFO_NAMELEN);
-  strncpy(pw_aln->sqinfo[1].name, seq2->seqname,SQINFO_NAMELEN);
+  copy_name(pw_aln->sqinfo[0].name, seq1->seqname,SQINFO_NAMELEN);
+  copy_name(pw_aln->sqinfo[1].name, seq2->seqname,SQINFO_NAMELEN);
   pw_aln->sqinfo[1].flags = pw_aln->sqinfo[0].flags = SQINFO_DESC | SQINFO_ID;
-  sprintf(pw_aln->sqinfo[0].desc, "score=%d alignlen=%d start=%d stop=%d",
-	  score,seq_counter,begin1Index+1,end1Index+1);
-  strncpy(pw_aln->msa->sqdesc[0],pw_aln->sqinfo[0].desc,SQINFO_DESCLEN);
-  sprintf(pw_aln->sqinfo[1].desc, "score=%d alignlen=%d start=%d stop=%d",
-	  score,seq_counter,begin2Index+1,end2Index+1);
-  strncpy(pw_aln->msa->sqdesc[1],pw_aln->sqinfo[1].desc,SQINFO_DESCLEN);
+  snprintf(pw_aln->sqinfo[0].desc, SQINFO_DESCLEN,
+	   "score=%d alignlen=%d start=%d stop=%d",
+	   score,seq_counter,begin1Index+1,end1Index+1);
+  copy_name(pw_aln->msa->sqdesc[0],pw_aln->sqinfo[0].desc,SQINFO_DESCLEN);
+  snprintf(pw_aln->sqinfo[1].desc, SQINFO_DESCLEN,
+	   "score=%d alignlen=%d start=%d stop=%d",
+	   score,seq_counter,begin2Index+1,end2Index+1);
+  copy_name(pw_aln->msa->sqdesc[1],pw_aln->sqinfo[1].desc,SQINFO_DESCLEN);
 
   pw_aln->sqinfo[0].len = seq1->length;
   pw_aln->sqinfo[1].len = seq2->length;
@@ -651,11 +680,11 @@ create_pairwise_zuker_alignment( int i, int j,
   pw_aln->sqinfo[1].start = begin2Index;
   pw_aln->sqinfo[1].stop = end2Index;
 
-  return 0;  
+  return 0;
 }
 
 
-/* This is heavily lifted (but ported to C) 
+/* This is heavily lifted (but ported to C)
  * from Michael Smoot's C++ ZukerGenerator.cpp code
  
  * This function only builds an alignment from the forward matrix
@@ -675,9 +704,10 @@ traceback(  int i, int j,
   /* The maximum length the alignment could be */
   int maxlen =   seq1->length + seq2->length +1;
   char * seqstr[NUM_PW_SEQS];
-  
+
   int seq_counter = 0;
   int diff,x,dir,k, begin1Index, begin2Index;
+  for(k=0;k < NUM_PW_SEQS;k++) seqstr[k] = NULL;
   
   int end1Index = i;
   int end2Index = j;
@@ -797,23 +827,25 @@ traceback(  int i, int j,
   pw_aln->sqinfo      = (SQINFO *)calloc( NUM_PW_SEQS,
 					  sizeof(SQINFO));  
 
-  strncpy(pw_aln->msa->sqname[0], seq1->seqname, SQINFO_NAMELEN);
-  strncpy(pw_aln->msa->sqname[1], seq2->seqname, SQINFO_NAMELEN);
+  copy_name(pw_aln->msa->sqname[0], seq1->seqname, SQINFO_NAMELEN);
+  copy_name(pw_aln->msa->sqname[1], seq2->seqname, SQINFO_NAMELEN);
 
   pw_aln->msa->nseq      = NUM_PW_SEQS;
   pw_aln->msa->alen      = seq_counter;
   pw_aln->score           = score; /* alignment score */
   pw_aln->sqinfo[0].start = begin1Index;
   pw_aln->sqinfo[0].stop = end1Index;
-  strncpy(pw_aln->sqinfo[0].name, seq1->seqname,SQINFO_NAMELEN);
-  strncpy(pw_aln->sqinfo[1].name, seq2->seqname,SQINFO_NAMELEN);
+  copy_name(pw_aln->sqinfo[0].name, seq1->seqname,SQINFO_NAMELEN);
+  copy_name(pw_aln->sqinfo[1].name, seq2->seqname,SQINFO_NAMELEN);
   pw_aln->sqinfo[1].flags = pw_aln->sqinfo[0].flags = SQINFO_DESC | SQINFO_ID;
-  sprintf(pw_aln->sqinfo[0].desc, "score=%d alignlen=%d start=%d stop=%d",
-	  score,seq_counter,begin1Index+1,end1Index+1);
-  strncpy(pw_aln->msa->sqdesc[0],pw_aln->sqinfo[0].desc,SQINFO_DESCLEN);
-  sprintf(pw_aln->sqinfo[1].desc, "score=%d alignlen=%d start=%d stop=%d",
-	  score,seq_counter,begin2Index+1,end2Index+1);
-  strncpy(pw_aln->msa->sqdesc[1],pw_aln->sqinfo[1].desc,SQINFO_DESCLEN);
+  snprintf(pw_aln->sqinfo[0].desc, SQINFO_DESCLEN,
+	   "score=%d alignlen=%d start=%d stop=%d",
+	   score,seq_counter,begin1Index+1,end1Index+1);
+  copy_name(pw_aln->msa->sqdesc[0],pw_aln->sqinfo[0].desc,SQINFO_DESCLEN);
+  snprintf(pw_aln->sqinfo[1].desc, SQINFO_DESCLEN,
+	   "score=%d alignlen=%d start=%d stop=%d",
+	   score,seq_counter,begin2Index+1,end2Index+1);
+  copy_name(pw_aln->msa->sqdesc[1],pw_aln->sqinfo[1].desc,SQINFO_DESCLEN);
 
   pw_aln->sqinfo[0].len = seq1->length;
   pw_aln->sqinfo[1].len = seq2->length;
@@ -821,5 +853,5 @@ traceback(  int i, int j,
   pw_aln->sqinfo[1].start = begin2Index;
   pw_aln->sqinfo[1].stop = end2Index;
 
-  return 0;  
+  return 0;
 }

@@ -1,77 +1,113 @@
-CC        = gcc
-# Intel compiler
-#CC        = icc
-COPY      = cp
-MKDIR	  = mkdir -p
-INSTALLDIR=../bin
+# subopt-kaks: suboptimal alignments and Ka/Ks estimation
+#
+# Normal use is through the top-level Makefile (which also builds squid):
+#     make                 build everything
+#     make install         install into ./bin (PREFIX defaults to the repo)
+#     make install PREFIX=/usr/local
+#
+# Variables you may override on the command line:
+#     CC, CFLAGS, LDFLAGS  compiler and flags
+#     PREFIX               install root (default: repository root)
+#     DATADIR              where matricies/ lives at run time
+#                          (default: $(PREFIX)/share/subopt-kaks, or the
+#                          repository root when PREFIX is the repository)
+#     DESTDIR              staging prefix for packaging
+#
+# The run-time matrix directory is compiled into util.o as SUBOPT_DATADIR.
+# A `.datadir` stamp forces util.o to rebuild whenever DATADIR changes, so
+# `make install PREFIX=...` always installs binaries that know their data.
+
+ROOT      := $(abspath ..)
+PREFIX    ?= $(ROOT)
+ifeq ($(abspath $(PREFIX)),$(ROOT))
+DATADIR   ?= $(ROOT)
+MANDIR    ?= $(ROOT)/man
+else
+DATADIR   ?= $(PREFIX)/share/subopt-kaks
+MANDIR    ?= $(PREFIX)/share/man/man1
+endif
+BINDIR    ?= $(PREFIX)/bin
+DESTDIR   ?=
+
+CC        ?= gcc
+SQUIDDIR  ?= $(ROOT)/squid
+SQUIDLIB  ?= $(SQUIDDIR)/libsquid.a
+CFLAGS    ?= -O2 -g
+CPPFLAGS  += -I$(SQUIDDIR) -DSUBOPT_DATADIR='"$(DATADIR)"'
+LDFLAGS   ?=
+LIBS       = $(SQUIDLIB) -lm
+
+INSTALL      ?= install
+INSTALL_PROG ?= $(INSTALL) -m 755
+INSTALL_DATA ?= $(INSTALL) -m 644
 
 PROGS     = zuker_align cds_zuker_align yn00_zuker_align yn00_cds_optimal \
-	    yn00_cds_prealigned
-OBJS      = zuker.o util.o
-CDSOBJS   = $(OBJS) mrtrans.o 
-YN00OBJS  = $(CDSOBJS) yn00_simple.o tools.o
-CDS_OPT   = $(YN00OBJS)
-PROG_OBJS = zuker_align.o cds_zuker_align.o yn00_zuker_align.o \
-	    yn00_cds_optimal.o
+            yn00_cds_prealigned
+MANPAGES  = $(addprefix $(ROOT)/man/,$(addsuffix .1,$(PROGS)))
 
-SQUIDDIR  = ../squid
-SQUIDINC  = $(SQUIDDIR)
-SQUIDLIB  = $(SQUIDDIR)
+ALIGN_OBJS = zuker.o util.o
+CDS_OBJS   = $(ALIGN_OBJS) mrtrans.o
+YN00_OBJS  = yn00_simple.o tools.o
+PROG_OBJS  = $(addsuffix .o,$(PROGS))
 
-#CFLAGS    = -g -DMALLOC -DDMALLOC_FUNC_CHECK -I$(SQUIDINC)
-#CFLAGS    = -g  -I$(SQUIDINC) -O4
-#LIBS      = -L$(SQUIDLIB) -lsquid -lm -ldmalloc
-# Turn compiler optimization flags on
-# athlon options
-#CFLAGS    = -I$(SQUIDINC) -O4 -funroll-loops -fomit-frame-pointer \
-#	    -march=athlon -mcpu=athlon 
-# generic OSX options
-CFLAGS = -I$(SQUIDINC) -O4 -funroll-loops -fomit-frame-pointer
-# Intel options
-#CFLAGS    = -I$(SQUIDINC) -O3 -tpp7 -unroll -axKW
-LIBS      = -L$(SQUIDLIB) -lsquid -lm
-
+.PHONY: all install uninstall clean test
 
 all: $(PROGS)
 
+zuker_align:         $(ALIGN_OBJS) zuker_align.o
+cds_zuker_align:     $(CDS_OBJS) cds_zuker_align.o
+yn00_zuker_align:    $(CDS_OBJS) $(YN00_OBJS) yn00_zuker_align.o
+yn00_cds_optimal:    $(CDS_OBJS) $(YN00_OBJS) yn00_cds_optimal.o
+yn00_cds_prealigned: util.o $(YN00_OBJS) yn00_cds_prealigned.o
+
+$(PROGS):
+	$(CC) $(CFLAGS) $(LDFLAGS) -o $@ $^ $(LIBS)
+
+%.o: %.c
+	$(CC) $(CFLAGS) $(CPPFLAGS) -c $<
+
+# header dependencies
+zuker.o util.o zuker_align.o: align.h util.h
+mrtrans.o cds_zuker_align.o: mrtrans.h util.h
+yn00_simple.o tools.o: paml.h treesub.c util.h
+yn00_zuker_align.o yn00_cds_optimal.o: align.h mrtrans.h paml.h util.h
+yn00_cds_prealigned.o: align.h mrtrans.h util.h
+
+# rebuild util.o when the compiled-in data directory changes
+.datadir: FORCE
+	@echo '$(DATADIR)' | cmp -s - $@ || echo '$(DATADIR)' > $@
+util.o: .datadir
+FORCE:
+
+$(SQUIDLIB):
+	@echo "squid library $(SQUIDLIB) not found; run 'make' at the top level" >&2
+	@exit 1
+
 install: $(PROGS)
-	$(MKDIR) $(INSTALLDIR)
-	$(COPY) $(PROGS) $(INSTALLDIR)
+	$(INSTALL) -d $(DESTDIR)$(BINDIR)
+	$(INSTALL_PROG) $(PROGS) $(DESTDIR)$(BINDIR)
+ifneq ($(abspath $(MANDIR)),$(ROOT)/man)
+	$(INSTALL) -d $(DESTDIR)$(MANDIR)
+	$(INSTALL_DATA) $(MANPAGES) $(DESTDIR)$(MANDIR)
+endif
+ifneq ($(abspath $(DATADIR)),$(ROOT))
+	$(INSTALL) -d $(DESTDIR)$(DATADIR)/matricies/aa $(DESTDIR)$(DATADIR)/matricies/nt
+	$(INSTALL_DATA) $(ROOT)/matricies/README $(DESTDIR)$(DATADIR)/matricies
+	$(INSTALL_DATA) $(ROOT)/matricies/aa/* $(DESTDIR)$(DATADIR)/matricies/aa
+	$(INSTALL_DATA) $(ROOT)/matricies/nt/* $(DESTDIR)$(DATADIR)/matricies/nt
+endif
 
-yn00_zuker_align: $(YN00OBJS) yn00_zuker_align.o
-	$(CC) $(CFLAGS) -o $@ $(YN00OBJS) yn00_zuker_align.o $(LIBS)
+uninstall:
+	rm -f $(addprefix $(DESTDIR)$(BINDIR)/,$(PROGS))
+ifneq ($(abspath $(MANDIR)),$(ROOT)/man)
+	rm -f $(addprefix $(DESTDIR)$(MANDIR)/,$(notdir $(MANPAGES)))
+endif
+ifneq ($(abspath $(DATADIR)),$(ROOT))
+	rm -rf $(DESTDIR)$(DATADIR)/matricies
+endif
 
-zuker_align: $(OBJS) zuker_align.o
-	$(CC) $(CFLAGS) -o $@ $(OBJS) zuker_align.o $(LIBS)
-
-cds_zuker_align: $(CDSOBJS) cds_zuker_align.o
-	$(CC) $(CFLAGS) -o $@ $(CDSOBJS) cds_zuker_align.o $(LIBS)
-
-yn00_cds_optimal: $(CDS_OPT) yn00_cds_optimal.o
-	$(CC) $(CFLAGS) -o $@ $(CDS_OPT) yn00_cds_optimal.o $(LIBS)
-
-yn00_cds_prealigned: $(YN00OBJS) yn00_cds_prealigned.o
-	$(CC) $(CFLAGS) -o $@ tools.o util.o yn00_simple.o yn00_cds_prealigned.o $(LIBS)
-
-
-.c.o:
-	$(CC) $(CFLAGS) -c $<
-.c:
-	$(CC) $(CFLAGS) $< -o $@
+test: $(PROGS)
+	$(ROOT)/tst/run_tests.sh $(CURDIR)
 
 clean:
-	rm -f *~ $(OBJS) $(CDSOBJS) $(YN00OBJS) $(PROGS) $(PROG_OBJS)
-
-zuker.o: align.h util.h
-
-util.o: util.h
-
-mrtrans.o: mrtrans.h mrtrans.c
-
-zuker_align.o: zuker.o zuker_align.c
-
-cds_zuker_align.o: zuker.o mrtrans.o cds_zuker_align.c
-
-suboptaligner: suboptaligner.o align.o 
-	$(CC) $(CFLAGS) -DDEBUG -o $@ suboptaligner.o align.o $(LIBS)
-
+	rm -f *~ *.o $(PROGS) .datadir

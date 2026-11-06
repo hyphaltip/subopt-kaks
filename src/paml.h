@@ -191,7 +191,7 @@ complex cplus (complex a, complex b);
 complex cminus (complex a, complex b);
 complex cby (complex a, complex b);
 complex cdiv (complex a,complex b);
-complex cexp (complex a);
+complex paml_cexp (complex a);
 complex cfactor (complex x, double a);
 int cxtoy (complex x[], complex y[], int n);
 int cmatby (complex a[], complex b[], complex c[], int n,int m,int k);

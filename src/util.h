@@ -108,6 +108,7 @@ void       print_matrix( int ** matrix,
 			 int type, char * label );
 void       cleanup_matrix(void ** m,int x);
 sequence * reverse_seq( const sequence *);
+void       free_sequence( sequence *);     /* frees seqstr, seqname, struct */
 void       cleanup_alignment(alignment *);
 
 /* Default substitution matrix name looked up within a matrix directory. */

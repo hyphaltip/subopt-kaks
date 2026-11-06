@@ -1,5 +1,42 @@
 Changes to suboptaln
 
+0.07 (2026-11-05)
+ build
+  Top-level Makefile: `make` configures and builds squid then src;
+  `make test`, `make install [PREFIX=...]` (installs matrices and man
+  pages, compiles the data directory into the binaries), `make rust`.
+  Links with GCC >= 10 (duplicate global `noisy` removed).
+  tst/run_tests.sh + tst/expected: byte-for-byte regression tests.
+
+ zuker.c
+  optimal_align decoded the best-cell index with the wrong stride, so the
+  local/global optimal alignment could end one residue early. The test
+  pair now gives the same dN/dS as the pre-aligned reference.
+  Global alignments now always trace back from the bottom-right cell.
+  seq2 matrix indices computed once per column instead of once per cell.
+  All error paths free their matrices; reverse_seq copies are freed.
+
+ all aligners
+  --gapopen/--gapext were negated to a positive bonus; now always a
+  penalty regardless of the sign given.
+  Uninitialised file handles / counters on early exits fixed
+  (cds_zuker_align crashed in fputc). --output - means stdout.
+  Default matrix BLOSUM62 (BLOSUM50 is not shipped); --matrix accepts a
+  bare name resolved through --matrix-dir, $SUBOPT_MATRIX_DIR, $SUBOPTDIR,
+  ./matricies/aa, ../matricies/aa, or the compiled-in data directory.
+
+ zuker_align.c
+  cds_seqs[cdsct++] wrote past the end of the 2-element array.
+
+ yn00_cds_optimal.c
+  Multiple input files no longer leak or mis-size the sequence arrays.
+
+ yn00_cds_prealigned.c
+  Header printed once, not once per input file; per-MSA memory freed.
+
+ yn00_simple.c
+  GetFreqs failure now frees its buffers and resets PAML state.
+
 0.06 
  yn00_cds_prealigned.c 
   a new program which will process multiple alignments and calculate all

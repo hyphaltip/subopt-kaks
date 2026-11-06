@@ -340,7 +340,8 @@ fn get_kappa(data: &CodonData, kappa_init: f64) -> f64 {
                 for v in f[k].iter_mut() {
                     *v /= s;
                 }
-                let p = (f[k][0 * 4 + 1] + f[k][2 * 4 + 3]) * 2.0;
+                // transition pairs: (T,C) at row 0 col 1 and (A,G) at row 2 col 3
+                let p = (f[k][1] + f[k][2 * 4 + 3]) * 2.0;
                 let qq = 1.0 - (f[k][0] + f[k][5] + f[k][10] + f[k][15]) - p;
                 let pi4 = [
                     f[k][0] + f[k][1] + f[k][2] + f[k][3],

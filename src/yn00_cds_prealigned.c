@@ -25,20 +25,20 @@ struct opt_s OPTIONS[] = {
 static char usage[] = "\nUsage: yn00_cds_prealigned [-options] <sequence file>\n\n   Generate the optimal alignments for a pair of CDS sequences using the protein sequence as a template.\n   Available options:\n   -h      : help; print version and usage info\n   -v      : verbose output -- show alignment path states.\n ";
 static char experts[] = "\n   --informat    : Format of the input sequence file alignment.\n   --output      : specify an output file instead or writing to STDOUT\n   --noheader    : Do not show the header for the table summary\n\n";
 
-main (int argc, char ** argv ) 
+int
+main (int argc, char ** argv )
 {
   char     *seqfile;            /* name of MSA sequence file     */
   MSAFILE  *msafile;		/* open MSA sequence file        */
   MSA      *msa;                /* store the MSA */
   int       fmt,ofmt=106;	/* format of seqfile         */
   char  *optname;
-  char  *optarg, *t;
+  char  *optarg;
   int    optind;
   int    seqct = 0;
-  int    do_oneline       = 0;
   char   * output_filename = 0;
   int    showheader=1;
-  FILE  *ofd, *fd;
+  FILE  *ofd;
 
   int    i,j,k;
   pairwise_distances pwMLdist, pwNGdist;
@@ -79,25 +79,23 @@ main (int argc, char ** argv )
     if( ! ofd ) {
       Die( "could not open file %s",output_filename);
     }
-  } else 
+  } else
     ofd = stdout;
+  (void)ofmt;
   
+  if( showheader ) {
+    fprintf(ofd,"SEQ1\tSEQ2\tdN\tdS\tOMEGA\tN\tS\tkappa\tt\tLENGTH\n");
+  }
+
   while( optind < argc ) {
     seqfile = argv[optind++];
-    /* for starters, lets do this dumb way and read the whole file
-       in twice
-    */
     if ((msafile = MSAFileOpen(seqfile, fmt, NULL)) == NULL)
       Die("Failed to open sequence file %s for reading", seqfile);
 
-    if( showheader ) {
-      fprintf(ofd,"SEQ1\tSEQ2\tdN\tdS\tOMEGA\tN\tS\tkappa\tt\tLENGTH\n");
-    }    
-
-    while (msa = MSAFileRead(msafile) )
+    while ((msa = MSAFileRead(msafile)) != NULL )
     {
-      if( ! msa->nseq ) continue;      
-	
+      if( ! msa->nseq ) { MSAFree(msa); continue; }
+
       seqct = msa->nseq;
       pwMLdist.N    = make_double_matrix(seqct,seqct);
       pwMLdist.dN   = make_double_matrix(seqct,seqct);
@@ -116,9 +114,7 @@ main (int argc, char ** argv )
       if( do_kaks_yn00(msa, &pwMLdist,&pwNGdist) < 0 ) {
 	fprintf(stderr, "warning: problem with align for %s %s\n",
 		msa->sqname[0], msa->sqname[1]);
-	continue;
-      }
-       
+      } else
       for( i=0; i < msa->nseq; i++ ) {
 	/* stip trailing whitespace */
 	k = strlen(msa->sqname[i]);

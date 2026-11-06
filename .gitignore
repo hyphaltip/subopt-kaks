@@ -1,7 +1,9 @@
 *~
 *.o
-Makefile
-bin
+/squid/Makefile
+/squid/Testsuite/Makefile
+/bin
+/src/.datadir
 
 # Build artifacts
 *.a
